@@ -1,4 +1,10 @@
-all: CalendarParser
+all: CalendarParser.o test
 
-CalendarParser:
-	gcc -Wall -std=c99 -pedantic CalendarParser.c -o test
+CalendarParser: CalendarParser.c CalendarParser.h HelperFunction.h
+	gcc -Wall -std=c99 -pedantic CalendarParser.c -o CalendarParser
+
+test:test.c
+	gcc -Wall -std=c99 -pedantic test.c -o test
+
+clean:
+		rm *.o test

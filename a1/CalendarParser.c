@@ -6,15 +6,6 @@ By: CLayton Provan
 #include "CalendarParser.h"
 #include "HelperFunction.h"
 
-int main(){
-  Calendar **tester;
-
-  createCalendar("test.ics", tester);
-
-  return 0;
-}
-
-
 /** Function to create a Calendar object based on the contents of an iCalendar file.
  *@pre File name cannot be an empty string or NULL.  File name must have the .ics extension.
        File represented by this name must exist and must be readable.
@@ -29,8 +20,22 @@ int main(){
 **/
 ICalErrorCode createCalendar(char* fileName, Calendar** obj){
     FILE *fp;
-    char c;
+    Calendar *tempCal;
+    int lineFactor;
+    //used to hold full line. must be dynamically
+    // allocated to allow for mutipel folded lines
+    char *readLine;
+    //used to hold the line of information
+    //holds 75 bytes, 1 null poiner and potentially
+    //3 extra bytes to indicate line break"/r/n "
+    char *bufferLine;
 
+    //used to measure ammount of memory need to reallocate for folded lines
+    lineFactor =1;
+
+    tempCal = malloc(sizeof(Calendar));
+    readLine = malloc(sizeof(char)*(80*lineFactor));
+    bufferLine = malloc(sizeof(char)*(80*lineFactor));
 
     /*open file for reading*/
     fp = fopen(fileName, "r+");
@@ -40,16 +45,48 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
       return INV_FILE;
     }
 
+
+
     /*reads through each character in the file*/
-    while((c = fgetc(fp)) != EOF){
-      printf("%c",c );
+    while(fgets(bufferLine, 80,fp)){
+      //remove newline, should be fine for new line at beginnign becayse fgets will read until then
+      bufferLine[strcspn(bufferLine, "\r\n")] = 0;
+
+      //test for folded line, else line is valid and can be parsed
+      if(bufferLine[0] == ' ' || bufferLine[0] == '\t'){
+
+        lineFactor++;
+        readLine = realloc(readLine,sizeof(char)*(80*lineFactor));
+        //gets rid of space or half tab
+        bufferLine++;
+
+        strcat(readLine,bufferLine);
+        // now you may have you full line, must check if next is folded as well
+      }else{
+        //now readLine is the full line! greeat
+        printf("line is \"%s\"\n",readLine );
+
+        //do stuff
+
+        //resets readLine and copies next line to it. as well resets factor for reallocing readLine
+        //makes it so last line is not processed in loop and is delt with afterwards
+        memset(readLine,0,strlen(readLine));
+        strcat(readLine,bufferLine);
+        lineFactor =1;
+      }
+
+
     }
 
+    //do stuff with final line here
+    printf("line is \"%s\"\n",readLine);
 
 
+    *obj = tempCal;
+    //dont forget to use strcpy
+
+    free(readLine);
     fclose(fp);
-
-
 
   return OK;
 }
