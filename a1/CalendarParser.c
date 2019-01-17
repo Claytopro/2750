@@ -4,6 +4,16 @@ By: CLayton Provan
 */
 
 #include "CalendarParser.h"
+#include "HelperFunction.h"
+
+int main(){
+  Calendar **tester;
+
+  createCalendar("test.ics", tester);
+
+  return 0;
+}
+
 
 /** Function to create a Calendar object based on the contents of an iCalendar file.
  *@pre File name cannot be an empty string or NULL.  File name must have the .ics extension.
@@ -18,8 +28,30 @@ By: CLayton Provan
  *@param a double pointer to a Calendar struct that needs to be allocated
 **/
 ICalErrorCode createCalendar(char* fileName, Calendar** obj){
+    FILE *fp;
+    char c;
 
-  return NULL;
+
+    /*open file for reading*/
+    fp = fopen(fileName, "r+");
+    if( fp == NULL){
+      /* TODO:Change TO ERROR CODE */
+      printf("ERROR, COUND NOT OPEN FILE \n");
+      return INV_FILE;
+    }
+
+    /*reads through each character in the file*/
+    while((c = fgetc(fp)) != EOF){
+      printf("%c",c );
+    }
+
+
+
+    fclose(fp);
+
+
+
+  return OK;
 }
 
 
@@ -67,7 +99,7 @@ char* printError(ICalErrorCode err){
  *@param obj - a pointer to a Calendar struct
  **/
 ICalErrorCode writeCalendar(char* fileName, const Calendar* obj){
-  return NULL;
+  return INV_FILE;
 
 }
 
@@ -80,7 +112,7 @@ ICalErrorCode writeCalendar(char* fileName, const Calendar* obj){
  **/
 ICalErrorCode validateCalendar(const Calendar* obj){
 
-  return NULL;
+  return INV_FILE;
 
 }
 
