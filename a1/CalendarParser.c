@@ -21,7 +21,7 @@ By: CLayton Provan
 ICalErrorCode createCalendar(char* fileName, Calendar** obj){
     FILE *fp;
     Calendar *tempCal;
-    int lineFactor;
+    int lineFactor, objectLevel;
     //used to hold full line. must be dynamically
     // allocated to allow for mutipel folded lines
     char *readLine;
@@ -30,8 +30,11 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
     //3 extra bytes to indicate line break"/r/n "
     char *bufferLine;
 
+    char *tempStr;
+
     //used to measure ammount of memory need to reallocate for folded lines
     lineFactor =1;
+    objectLevel =0;
 
     tempCal = malloc(sizeof(Calendar));
     readLine = malloc(sizeof(char)*(80*lineFactor));
@@ -66,7 +69,53 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
         //now readLine is the full line! greeat
         printf("line is \"%s\"\n",readLine );
 
-        //do stuff
+
+          tempStr = strtok(readLine,":");
+
+
+
+        if(tempStr != NULL){
+
+          if(strcmp(tempStr,"BEGIN") == 0){
+          //used to change what kind of struct is being created
+          //cal (1), event(2), Alarma(3)
+          objectLevel++;
+        }else if(strcmp(tempStr,"END") == 0){
+          objectLevel--;
+        }else {
+
+          switch(objectLevel){
+            //used when adding to calendar struct
+            case 1:
+              if(strcmp(tempStr,"VERSION") == 0){
+
+                printf("readLIne is %s\n",readLine );
+                printf("temp is %s\n",tempStr );
+
+                tempStr = strtok(readLine," ");
+                tempCal->version = atof(tempStr);
+              }
+            break;
+            //used when adding to event struct
+            case 2:
+
+            break;
+            //used when adding to alarm struct
+            case 3:
+
+            break;
+            //error has occurred
+            default:
+            printf("ERROR ICALENDAR OBJECT BEGAN INCORRECT\n");
+
+          }
+
+        }
+          printf("%s\n",tempStr );
+
+
+
+        }
 
         //resets readLine and copies next line to it. as well resets factor for reallocing readLine
         //makes it so last line is not processed in loop and is delt with afterwards
@@ -110,8 +159,15 @@ void deleteCalendar(Calendar* obj){
  *@param obj - a pointer to a Calendar struct
 **/
 char* printCalendar(const Calendar* obj){
+  char *toRtrn = "Calendar\n";
+  char *temp = '\0';
 
-  return NULL;
+  printf("%f\n",obj->version );
+
+
+
+
+  return toRtrn;
 
 }
 

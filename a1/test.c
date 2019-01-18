@@ -10,5 +10,7 @@ int main(){
 
   createCalendar("test.ics", &tester);
 
+  printf("%s\n",printCalendar(tester));
+
   return 0;
 }
