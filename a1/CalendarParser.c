@@ -36,6 +36,8 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
     lineFactor =1;
     objectLevel =0;
 
+    // TODO : check for malloc erros
+
     tempCal = malloc(sizeof(Calendar));
     readLine = malloc(sizeof(char)*(80*lineFactor));
     bufferLine = malloc(sizeof(char)*(80*lineFactor));
@@ -59,6 +61,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
       if(bufferLine[0] == ' ' || bufferLine[0] == '\t'){
 
         lineFactor++;
+        //realloc enough memory to concatonate strings together.
         readLine = realloc(readLine,sizeof(char)*(80*lineFactor));
         //gets rid of space or half tab
         bufferLine++;
@@ -69,32 +72,45 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
         //now readLine is the full line! greeat
         printf("line is \"%s\"\n",readLine );
 
-
-          tempStr = strtok(readLine,":");
-
-
+        tempStr = strtok(readLine,":");
 
         if(tempStr != NULL){
 
           if(strcmp(tempStr,"BEGIN") == 0){
           //used to change what kind of struct is being created
           //cal (1), event(2), Alarma(3)
+
+          //TODO check if valid code afterwards is input
+
           objectLevel++;
         }else if(strcmp(tempStr,"END") == 0){
           objectLevel--;
         }else {
-
           switch(objectLevel){
             //used when adding to calendar struct
             case 1:
+
               if(strcmp(tempStr,"VERSION") == 0){
-
-                printf("readLIne is %s\n",readLine );
-                printf("temp is %s\n",tempStr );
-
-                tempStr = strtok(readLine," ");
+                //moves to next part of string which should be version number
+                tempStr = strtok(NULL,":");
                 tempCal->version = atof(tempStr);
+                if(tempCal->version == 0.0){
+                  //atof will default to 0.0 when a string cant be converted to float
+                  return INV_VER;
+                }
+                break;
               }
+
+              if(strcmp(tempStr,"PRODID") == 0){
+                tempStr = strtok(NULL,":");
+                strcpy(tempCal->prodID,tempStr);
+                printf("proid is %s\n",tempCal->prodID);
+                break;
+              }
+
+              //get valid property and add to linked list in Calendar Obj
+
+
             break;
             //used when adding to event struct
             case 2:
@@ -111,7 +127,6 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
           }
 
         }
-          printf("%s\n",tempStr );
 
 
 
@@ -162,7 +177,7 @@ char* printCalendar(const Calendar* obj){
   char *toRtrn = "Calendar\n";
   char *temp = '\0';
 
-  printf("%f\n",obj->version );
+  printf("obj version: %.2f\n",obj->version );
 
 
 
