@@ -39,7 +39,10 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
     // TODO : check for malloc erros
 
     tempCal = malloc(sizeof(Calendar));
-    readLine = malloc(sizeof(char)*(80*lineFactor));
+    //OLD:readLine = malloc(sizeof(char)*(80*lineFactor));
+    //use calloc to fix valgring conditional jump errors
+    readLine = calloc(80,sizeof(char));
+    //readLine = NULL;
   //  bufferLine = malloc(sizeof(char)*(80*lineFactor));
 
     /*open file for reading*/
@@ -153,7 +156,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
     //dont forget to use strcpy
     printf("end buffer is :%s\n",bufferLine);
 
-  
+
     free(readLine);
     fclose(fp);
 
@@ -186,18 +189,19 @@ char* printCalendar(const Calendar* obj){
   char *toRtrn;
   char *temp;
 
-  toRtrn = malloc(sizeof(char)*100);
-  temp = malloc(sizeof(char)*20);
+//  toRtrn = malloc(sizeof(char)*100);
+  toRtrn = calloc(100,sizeof(char));
+  temp = calloc(100,sizeof(char));
 
   strcpy(toRtrn,"\nCalendar:\n");
   sprintf(temp,"Version is %.2f\n",obj->version);
-  toRtrn = realloc(toRtrn, (sizeof(toRtrn) + sizeof(temp) +1));
+  toRtrn = realloc(toRtrn, (sizeof(toRtrn) + sizeof(temp))+1);
 
   strcat(toRtrn,temp);
 
 
-  temp = realloc(temp,sizeof(char)*1002);
-  sprintf(temp,"prodID %s\n",obj->prodID);
+  // temp = realloc(temp,sizeof(char)*1002);
+  // sprintf(temp,"prodID %s\n",obj->prodID);
   //strcat(toRtrn,temp);
 
   free(temp);

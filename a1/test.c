@@ -12,13 +12,13 @@ int main(){
   createCalendar("test.ics", &tester);
 
 
-  // calendarToPtr = printCalendar(tester);
-  // printf("%s\n",calendarToPtr);
-  //
-  // if(calendarToPtr != NULL){
-  // //  printf("Freeing calendarString\n" );
-  //   free(calendarToPtr);
-  // }
+  calendarToPtr = printCalendar(tester);
+  printf("%s\n",calendarToPtr);
+
+  if(calendarToPtr != NULL){
+  //  printf("Freeing calendarString\n" );
+    free(calendarToPtr);
+  }
 
    deleteCalendar(tester);
 
