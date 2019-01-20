@@ -20,17 +20,17 @@ By: CLayton Provan
 **/
 ICalErrorCode createCalendar(char* fileName, Calendar** obj){
     FILE *fp;
-    Calendar *tempCal;
+    Calendar *tempCal = NULL;
     int lineFactor, objectLevel;
     //used to hold full line. must be dynamically
     // allocated to allow for mutipel folded lines
-    char *readLine;
+    char *readLine = NULL;
     //used to hold the line of information
     //holds 75 bytes, 1 null poiner and potentially
     //3 extra bytes to indicate line break"/r/n "
-    char *bufferLine;
-
-    char *tempStr;
+    char bufferLine[80];
+    //temp string for processing data
+    char *tempStr = NULL;
 
     //used to measure ammount of memory need to reallocate for folded lines
     lineFactor =1;
@@ -40,7 +40,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
 
     tempCal = malloc(sizeof(Calendar));
     readLine = malloc(sizeof(char)*(80*lineFactor));
-    bufferLine = malloc(sizeof(char)*(80*lineFactor));
+  //  bufferLine = malloc(sizeof(char)*(80*lineFactor));
 
     /*open file for reading*/
     fp = fopen(fileName, "r+");
@@ -59,12 +59,12 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
 
       //test for folded line, else line is valid and can be parsed
       if(bufferLine[0] == ' ' || bufferLine[0] == '\t'){
-
         lineFactor++;
         //realloc enough memory to concatonate strings together.
         readLine = realloc(readLine,sizeof(char)*(80*lineFactor));
+
         //gets rid of space or half tab
-        bufferLine++;
+        memmove(bufferLine, bufferLine+1, strlen(bufferLine));
 
         strcat(readLine,bufferLine);
         // now you may have you full line, must check if next is folded as well
@@ -87,6 +87,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
           objectLevel--;
         }else {
           switch(objectLevel){
+
             //used when adding to calendar struct
             case 1:
 
@@ -104,6 +105,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
               if(strcmp(tempStr,"PRODID") == 0){
                 tempStr = strtok(NULL,":");
                 strcpy(tempCal->prodID,tempStr);
+                //TODO: remove this print
                 printf("proid is %s\n",tempCal->prodID);
                 break;
               }
@@ -112,10 +114,12 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
 
 
             break;
+
             //used when adding to event struct
             case 2:
 
             break;
+
             //used when adding to alarm struct
             case 3:
 
@@ -123,7 +127,6 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
             //error has occurred
             default:
             printf("ERROR ICALENDAR OBJECT BEGAN INCORRECT\n");
-
           }
 
         }
@@ -148,7 +151,9 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
 
     *obj = tempCal;
     //dont forget to use strcpy
+    printf("end buffer is :%s\n",bufferLine);
 
+  
     free(readLine);
     fclose(fp);
 
@@ -164,6 +169,10 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
 **/
 void deleteCalendar(Calendar* obj){
 
+// causes error. dont know why
+//  free(obj->prodID);
+  free(obj);
+
 }
 
 
@@ -174,14 +183,24 @@ void deleteCalendar(Calendar* obj){
  *@param obj - a pointer to a Calendar struct
 **/
 char* printCalendar(const Calendar* obj){
-  char *toRtrn = "Calendar\n";
-  char *temp = '\0';
+  char *toRtrn;
+  char *temp;
 
-  printf("obj version: %.2f\n",obj->version );
+  toRtrn = malloc(sizeof(char)*100);
+  temp = malloc(sizeof(char)*20);
+
+  strcpy(toRtrn,"\nCalendar:\n");
+  sprintf(temp,"Version is %.2f\n",obj->version);
+  toRtrn = realloc(toRtrn, (sizeof(toRtrn) + sizeof(temp) +1));
+
+  strcat(toRtrn,temp);
 
 
+  temp = realloc(temp,sizeof(char)*1002);
+  sprintf(temp,"prodID %s\n",obj->prodID);
+  //strcat(toRtrn,temp);
 
-
+  free(temp);
   return toRtrn;
 
 }

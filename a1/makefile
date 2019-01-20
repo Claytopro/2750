@@ -6,5 +6,8 @@ CalendarParser: CalendarParser.c CalendarParser.h HelperFunction.h
 test:test.c
 	gcc -Wall -std=c99 -pedantic test.c -o test
 
+valgrind:
+	  valgrind --leak-check=yes ./test
+
 clean:
 		rm *.o test
