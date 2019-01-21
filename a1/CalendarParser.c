@@ -21,6 +21,7 @@ By: CLayton Provan
 ICalErrorCode createCalendar(char* fileName, Calendar** obj){
     FILE *fp;
     Calendar *tempCal = NULL;
+    Property *tempProp = NULL;
     int lineFactor, objectLevel;
     //used to hold full line. must be dynamically
     // allocated to allow for mutipel folded lines
@@ -37,7 +38,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
     objectLevel =0;
 
     // TODO : check for malloc erros
-
+    tempProp = malloc(sizeof(Property));
     tempCal = malloc(sizeof(Calendar));
     //OLD:readLine = malloc(sizeof(char)*(80*lineFactor));
     //use calloc to fix valgring conditional jump errors
@@ -103,17 +104,31 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
                   return INV_VER;
                 }
                 break;
-              }
-
-              if(strcmp(tempStr,"PRODID") == 0){
+              } else if(strcmp(tempStr,"PRODID") == 0){
                 tempStr = strtok(NULL,":");
                 strcpy(tempCal->prodID,tempStr);
                 //TODO: remove this print
                 printf("proid is %s\n",tempCal->prodID);
                 break;
+              }else{
+                //get valid property and add to linked list in Calendar Obj
+
+                //malloc this way for flexible array in property
+
+                //TODO Turn this shit into a function
+
+                strcpy(tempProp->propName,tempStr);
+                tempStr = strtok(NULL,":");
+                //realloc to account for size of description becuase of dynamic array in Property struct
+                tempProp = realloc(tempProp, sizeof(Property) + sizeof(char)*strlen(tempStr)+1);
+                strcpy(tempProp->propDescr,tempStr);
+
+                printf("name:%s descripton: %s\n",tempProp->propName,tempProp->propDescr);
+                //add to calprolist here.
+
+
               }
 
-              //get valid property and add to linked list in Calendar Obj
 
 
             break;
@@ -153,9 +168,10 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
 
 
     *obj = tempCal;
-    //dont forget to use strcpy
-    printf("end buffer is :%s\n",bufferLine);
 
+
+    //TODO move this(free tempProp) shit into delete calendar function once we get linked list codes
+    free(tempProp);
 
     free(readLine);
     fclose(fp);
@@ -189,20 +205,19 @@ char* printCalendar(const Calendar* obj){
   char *toRtrn;
   char *temp;
 
-//  toRtrn = malloc(sizeof(char)*100);
+//  initilizes values to 0, unlike malloc.
   toRtrn = calloc(100,sizeof(char));
   temp = calloc(100,sizeof(char));
 
   strcpy(toRtrn,"\nCalendar:\n");
   sprintf(temp,"Version is %.2f\n",obj->version);
-  toRtrn = realloc(toRtrn, (sizeof(toRtrn) + sizeof(temp))+1);
-
+  //+14 to not get valgrind errors, unsure why must ask TA, its because sizeof() returns 8
+  toRtrn = realloc(toRtrn, (strlen(toRtrn) + strlen(temp))+1);
   strcat(toRtrn,temp);
 
-
-  // temp = realloc(temp,sizeof(char)*1002);
-  // sprintf(temp,"prodID %s\n",obj->prodID);
-  //strcat(toRtrn,temp);
+  sprintf(temp,"prodID %s\n",obj->prodID);
+  toRtrn = realloc(toRtrn, (strlen(toRtrn) + strlen(temp))+1);
+  strcat(toRtrn,temp);
 
   free(temp);
   return toRtrn;

@@ -7,7 +7,7 @@ test:test.c
 	gcc -Wall -std=c99 -pedantic test.c -o test
 
 valgrind:
-	  valgrind --track-origins=yes ./test
+	  valgrind --leak-check=full --track-origins=yes ./test
 
 clean:
 		rm *.o test
