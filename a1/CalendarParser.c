@@ -22,7 +22,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
     FILE *fp;
     Calendar *tempCal = NULL;
     Property *tempProp = NULL;
-    int lineFactor, objectLevel;
+    int lineFactor, objectLevel, fileLen;
     //used to hold full line. must be dynamically
     // allocated to allow for mutipel folded lines
     char *readLine = NULL;
@@ -32,10 +32,12 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
     char bufferLine[80];
     //temp string for processing data
     char *tempStr = NULL;
+    char *fileExtension = NULL;
 
     //used to measure ammount of memory need to reallocate for folded lines
     lineFactor =1;
     objectLevel =0;
+
 
     // TODO : check for malloc erros
     tempProp = malloc(sizeof(Property));
@@ -48,7 +50,13 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
 
     /*open file for reading*/
     fp = fopen(fileName, "r+");
-    if( fp == NULL){
+
+    //test for extension matching .ics and if file exists
+    fileLen = strlen(fileName);
+    fileExtension = malloc(sizeof(char)*fileLen +2);
+    strcpy(fileExtension, &fileName[fileLen-4]);
+
+    if( fp == NULL ||  strcmp(".ics",fileExtension) != 0){
       /* TODO:Change TO ERROR CODE */
       printf("ERROR, COUND NOT OPEN FILE \n");
       return INV_FILE;
@@ -85,7 +93,6 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
           //cal (1), event(2), Alarma(3)
 
           //TODO check if valid code afterwards is input
-
           objectLevel++;
         }else if(strcmp(tempStr,"END") == 0){
           objectLevel--;
@@ -130,11 +137,16 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
               }
 
 
-
             break;
 
             //used when adding to event struct
             case 2:
+            //create new event, add the shit.
+            printf("EVENT stuff:%s",tempStr);
+
+
+            tempStr = strtok(NULL,":");
+            printf("(then)%s\n",tempStr);
 
             break;
 
@@ -172,7 +184,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
 
     //TODO move this(free tempProp) shit into delete calendar function once we get linked list codes
     free(tempProp);
-
+    free(fileExtension);
     free(readLine);
     fclose(fp);
 
@@ -209,13 +221,13 @@ char* printCalendar(const Calendar* obj){
   toRtrn = calloc(100,sizeof(char));
   temp = calloc(100,sizeof(char));
 
-  strcpy(toRtrn,"\nCalendar:\n");
-  sprintf(temp,"Version is %.2f\n",obj->version);
+  strcpy(toRtrn,"\nBEGIN:VCALENDAR\n");
+  sprintf(temp,"VERSION:%.2f\n",obj->version);
   //+14 to not get valgrind errors, unsure why must ask TA, its because sizeof() returns 8
   toRtrn = realloc(toRtrn, (strlen(toRtrn) + strlen(temp))+1);
   strcat(toRtrn,temp);
 
-  sprintf(temp,"prodID %s\n",obj->prodID);
+  sprintf(temp,"PRODID:%s\n",obj->prodID);
   toRtrn = realloc(toRtrn, (strlen(toRtrn) + strlen(temp))+1);
   strcat(toRtrn,temp);
 
