@@ -5,6 +5,7 @@ By: CLayton Provan
 
 #include "CalendarParser.h"
 #include "HelperFunction.h"
+#include "LinkedListAPI.h"
 
 /** Function to create a Calendar object based on the contents of an iCalendar file.
  *@pre File name cannot be an empty string or NULL.  File name must have the .ics extension.
@@ -47,6 +48,8 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
     readLine = calloc(80,sizeof(char));
     //readLine = NULL;
   //  bufferLine = malloc(sizeof(char)*(80*lineFactor));
+
+    tempCal->properties = initializeList(&printProperty,&deleteProperty,&compareProperties);
 
     /*open file for reading*/
     fp = fopen(fileName, "r+");
@@ -108,6 +111,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
                 tempCal->version = atof(tempStr);
                 if(tempCal->version == 0.0){
                   //atof will default to 0.0 when a string cant be converted to float
+                  printf("INVALUD VERSION\n");
                   return INV_VER;
                 }
                 break;
