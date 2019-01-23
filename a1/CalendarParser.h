@@ -74,7 +74,7 @@ typedef struct ical {
 
 	//Additional calendar properties.
 	//All objects in the list will be of type Property.  It must not be NULL.  It may be empty.
-    List* properties;
+  List* properties;
 
 } Calendar;
 

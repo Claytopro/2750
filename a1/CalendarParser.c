@@ -6,6 +6,7 @@ By: CLayton Provan
 #include "CalendarParser.h"
 #include "HelperFunction.h"
 #include "LinkedListAPI.h"
+#include "LinkedListAPI.c"
 
 /** Function to create a Calendar object based on the contents of an iCalendar file.
  *@pre File name cannot be an empty string or NULL.  File name must have the .ics extension.
@@ -49,6 +50,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
     //readLine = NULL;
   //  bufferLine = malloc(sizeof(char)*(80*lineFactor));
 
+    //intilize properties linkedlist in calendar
     tempCal->properties = initializeList(&printProperty,&deleteProperty,&compareProperties);
 
     /*open file for reading*/
@@ -122,35 +124,21 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
                 printf("proid is %s\n",tempCal->prodID);
                 break;
               }else{
-                //get valid property and add to linked list in Calendar Obj
 
-                //malloc this way for flexible array in property
-
-                //TODO Turn this shit into a function
-
-                strcpy(tempProp->propName,tempStr);
-                tempStr = strtok(NULL,":");
-                //realloc to account for size of description becuase of dynamic array in Property struct
-                tempProp = realloc(tempProp, sizeof(Property) + sizeof(char)*strlen(tempStr)+1);
-                strcpy(tempProp->propDescr,tempStr);
-
-                printf("name:%s descripton: %s\n",tempProp->propName,tempProp->propDescr);
-                //add to calprolist here.
-
-
+                //create a property and add it to the propertie list in Caledar object
+                addProperty(tempStr,&tempCal);
               }
-
 
             break;
 
             //used when adding to event struct
             case 2:
             //create new event, add the shit.
-            printf("EVENT stuff:%s",tempStr);
+          //  printf("EVENT stuff:%s",tempStr);
 
 
             tempStr = strtok(NULL,":");
-            printf("(then)%s\n",tempStr);
+          //  printf("(then)%s\n",tempStr);
 
             break;
 
@@ -185,7 +173,6 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
 
     *obj = tempCal;
 
-
     //TODO move this(free tempProp) shit into delete calendar function once we get linked list codes
     free(tempProp);
     free(fileExtension);
@@ -206,6 +193,12 @@ void deleteCalendar(Calendar* obj){
 
 // causes error. dont know why
 //  free(obj->prodID);
+
+//change to dlete list
+  if(obj->properties != NULL){
+    freeList(obj->properties);
+  }
+
   free(obj);
 
 }
@@ -220,6 +213,8 @@ void deleteCalendar(Calendar* obj){
 char* printCalendar(const Calendar* obj){
   char *toRtrn;
   char *temp;
+  void* elem;
+
 
 //  initilizes values to 0, unlike malloc.
   toRtrn = calloc(100,sizeof(char));
@@ -234,6 +229,22 @@ char* printCalendar(const Calendar* obj){
   sprintf(temp,"PRODID:%s\n",obj->prodID);
   toRtrn = realloc(toRtrn, (strlen(toRtrn) + strlen(temp))+1);
   strcat(toRtrn,temp);
+
+  //Create an iterator - again, the iterator is allocated on the stack
+	ListIterator iter = createIterator(obj->properties);
+
+	/*
+	Traverse the list using an iterator.
+	nextElement() returns NULL ones we reach the end of the list
+	*/
+	while ((elem = nextElement(&iter)) != NULL){
+    Property* tempProp = (Property*)elem;
+    temp = printProperty(tempProp);
+    strcat(temp,"\n");
+    toRtrn = realloc(toRtrn, (strlen(toRtrn) + strlen(temp))+1);
+    strcat(toRtrn,temp);
+
+	}
 
   free(temp);
   return toRtrn;
@@ -264,7 +275,6 @@ ICalErrorCode writeCalendar(char* fileName, const Calendar* obj){
   return INV_FILE;
 
 }
-
 
 /** Function to validating an existing a Calendar object
  *@pre Calendar object exists and is not null
@@ -310,19 +320,51 @@ char* printAlarm(void* toBePrinted){
   return NULL;
 }
 
+
 void deleteProperty(void* toBeDeleted){
+  Property *tempProp;
 
-
+  if (toBeDeleted == NULL){
+		return;
+	}
+  tempProp = (Property*)toBeDeleted;
+  //printf("deleting %s\n",printProperty(tempProp) );
+  free(tempProp);
 }
 
 int compareProperties(const void* first, const void* second){
+  Property* tmpProp1;
+  Property* tmpProp2;
+
+  if (first == NULL || second == NULL){
+		return 0;
+	}
+
+  tmpProp2 = (Property*)second;
+  tmpProp1 = (Property*)first;
+
+  if(strcmp(tmpProp1->propDescr,tmpProp2->propDescr) == 0 && strcmp(tmpProp1->propName,tmpProp2->propName) == 0){
+    return 1;
+  }
 
   return 0;
 }
 
 char* printProperty(void* toBePrinted){
+  Property *tempProp;
+  char *toRtrn;
 
-  return NULL;
+  if(toBePrinted == NULL){
+    return NULL;
+  }
+
+  tempProp = (Property*)toBePrinted;
+
+  toRtrn = calloc(201+ strlen(tempProp->propDescr),sizeof(char));
+  sprintf(toRtrn,"%s:%s",tempProp->propName,tempProp->propDescr);
+
+
+  return toRtrn;
 }
 
 void deleteDate(void* toBeDeleted){
@@ -337,4 +379,23 @@ int compareDates(const void* first, const void* second){
 char* printDate(void* toBePrinted){
 
   return NULL;
+}
+
+
+ICalErrorCode addProperty(char *property, Calendar** obj){
+    Property *newProperty = malloc(sizeof(Property));
+    char *tmp;
+    strcpy(newProperty->propName,property);
+    property = strtok(NULL,":");
+    //realloc to account for size of description becuase of dynamic array in Property struct
+    newProperty = realloc(newProperty,(sizeof(Property) + sizeof(char)*strlen(property)+1));
+    strcpy(newProperty->propDescr,property);
+
+    tmp = printProperty(newProperty);
+    printf("property to create: %s\n",tmp);
+    free(tmp);
+
+    insertFront((*obj)->properties,newProperty);
+
+    return OK;
 }
