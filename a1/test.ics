@@ -1,20 +1,15 @@
 BEGIN:VCALENDAR
 VERSION:2.0
-PRODID:-//ZContent.net//
- Zap Calendar 1.0//EN
-DESCRIPTION:This is a lo
- ng description
-  that exists on a long line.
-PROPERTY1:FUCKING SICK OI M8
-PROPERTY2:OI M8 Its FOKin RIGHT
+PRODID:-//hacksw/handcal//NONSGML v1.0//EN
 BEGIN:VEVENT
-SUMMARY:Access-A-Ride Pickup
-DTSTART;TZID=America/New_York:20130802T103400
-DTEND;TZID=America/New_York:20130802T110400
-LOCATION:1000 Broadway Ave.\, Brooklyn
-UID:c7614cff-3549-4a00-9152-d25cc1fe077d
-DESCRIPTION: Access-A-Ride trip to 900 Jay St.\, Brooklyn
-STATUS:CONFIRMED
-SEQUENCE:3
+UID:uid1@example.com
+DTSTAMP:19970714T170000Z
+ORGANIZER;CN=Jimmy Johnson:
+ MAILTO:john.doe@example.com
+DTSTART:19970714T170000Z
+;dont read this
+DTEND:19970715T035959Z
+CLASS:PUBLIC
+SUMMARY:Lorem ipsum dolor sit amet, consectetur adipiscing elit.
 END:VEVENT
 END:VCALENDAR

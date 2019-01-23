@@ -24,6 +24,8 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
     FILE *fp;
     Calendar *tempCal = NULL;
     Property *tempProp = NULL;
+    Event *tempEvent = NULL;
+    DateTime *tempDateTime = NULL;
     int lineFactor, objectLevel, fileLen;
     //used to hold full line. must be dynamically
     // allocated to allow for mutipel folded lines
@@ -74,101 +76,149 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
       //remove newline, should be fine for new line at beginnign becayse fgets will read until then
       bufferLine[strcspn(bufferLine, "\r\n")] = 0;
 
-      //test for folded line, else line is valid and can be parsed
-      if(bufferLine[0] == ' ' || bufferLine[0] == '\t'){
-        lineFactor++;
-        //realloc enough memory to concatonate strings together.
-        readLine = realloc(readLine,sizeof(char)*(80*lineFactor));
+      //this line is a comment and we can ignore it.
+      if(bufferLine[0] != ';'){
+        //test for folded line, else line is valid and can be parsed
+        if(bufferLine[0] == ' ' || bufferLine[0] == '\t'){
+          lineFactor++;
+          //realloc enough memory to concatonate strings together.
+          readLine = realloc(readLine,sizeof(char)*(80*lineFactor));
 
-        //gets rid of space or half tab
-        memmove(bufferLine, bufferLine+1, strlen(bufferLine));
+          //gets rid of space or half tab
+          memmove(bufferLine, bufferLine+1, strlen(bufferLine));
 
-        strcat(readLine,bufferLine);
-        // now you may have you full line, must check if next is folded as well
-      }else{
-        //now readLine is the full line! greeat
-        printf("line is \"%s\"\n",readLine );
+          strcat(readLine,bufferLine);
+          // now you may have you full line, must check if next is folded as well
+        }else{
+          //now readLine is the full line! greeat
+          //this is working : printf("line is \"%s\"\n",readLine );
 
-        tempStr = strtok(readLine,":");
+          tempStr = strtok(readLine,":");
 
-        if(tempStr != NULL){
+          if(tempStr != NULL){
 
-          if(strcmp(tempStr,"BEGIN") == 0){
-          //used to change what kind of struct is being created
-          //cal (1), event(2), Alarma(3)
+            if(strcmp(tempStr,"BEGIN") == 0){
+              //used to change what kind of struct is being created
+              //cal (1), event(2), Alarma(3)
+              tempStr = strtok(NULL,":");
 
-          //TODO check if valid code afterwards is input
-          objectLevel++;
-        }else if(strcmp(tempStr,"END") == 0){
-          objectLevel--;
-        }else {
-          switch(objectLevel){
+              if(strcmp(tempStr,"VCALENDAR")==0 && objectLevel ==0){
+                //this is valid
+              }else if(strcmp(tempStr,"VEVENT")==0 && objectLevel ==1){
+                //valid transformation
+                printf("allocate event\n");
+                tempEvent = malloc(sizeof(Event));
+                tempEvent->properties = initializeList(&printProperty,&deleteProperty,&compareProperties);
 
-            //used when adding to calendar struct
-            case 1:
-
-              if(strcmp(tempStr,"VERSION") == 0){
-                //moves to next part of string which should be version number
-                tempStr = strtok(NULL,":");
-                tempCal->version = atof(tempStr);
-                if(tempCal->version == 0.0){
-                  //atof will default to 0.0 when a string cant be converted to float
-                  printf("INVALUD VERSION\n");
-                  return INV_VER;
-                }
-                break;
-              } else if(strcmp(tempStr,"PRODID") == 0){
-                tempStr = strtok(NULL,":");
-                strcpy(tempCal->prodID,tempStr);
-                //TODO: remove this print
-                printf("proid is %s\n",tempCal->prodID);
-                break;
+              } else if(strcmp(tempStr,"VALARM")==0 && objectLevel ==2){
+                //this is valid
               }else{
-
-                //create a property and add it to the propertie list in Caledar object
-                addProperty(tempStr,&tempCal);
+                //no valid transformation, print error
               }
 
-            break;
 
-            //used when adding to event struct
-            case 2:
-            //create new event, add the shit.
-          //  printf("EVENT stuff:%s",tempStr);
+              objectLevel++;
+            }else if(strcmp(tempStr,"END") == 0){
+              tempStr = strtok(NULL,":");
+
+              if(strcmp(tempStr,"VCALENDAR")==0 && objectLevel ==1){
+                //this is valid and program should be ending
+              }else if(strcmp(tempStr,"VEVENT")==0 && objectLevel ==2){
+                //valid transformation and should add Event to Calendar event linkedlist
+                /*TODO: add events to list*/
+                printf("ending:uid:%s\n",tempEvent->UID);
+
+              } else if(strcmp(tempStr,"VALARM")==0 && objectLevel ==3){
+                //this is valid and should be adding alarm to current event.
+
+              }else{
+                //no valid transformation, print error
+              }
+
+              objectLevel--;
+            }else {
+              switch(objectLevel){
+
+                //used when adding to calendar struct
+                case 1:
+
+                if(strcmp(tempStr,"VERSION") == 0){
+                  //moves to next part of string which should be version number
+                  tempStr = strtok(NULL,":");
+                  tempCal->version = atof(tempStr);
+                  if(tempCal->version == 0.0){
+                    //atof will default to 0.0 when a string cant be converted to float
+                    printf("INVALUD VERSION\n");
+                    return INV_VER;
+                  }
+                  break;
+
+                } else if(strcmp(tempStr,"PRODID") == 0){
+                  tempStr = strtok(NULL,":");
+                  strcpy(tempCal->prodID,tempStr);
+                  //TODO: remove this print
+                  //printf("proid is %s\n",tempCal->prodID);
+                  break;
+                }else{
+
+                  //create a property and add it to the propertie list in Caledar object
+                  addProperty(tempStr,&tempCal);
+                }
+
+                break;
+
+                //used when adding to event struct
+                case 2:
+                //create new event, add the shit.
+                if(strcmp(tempStr,"UID") == 0){
+                  tempStr = strtok(NULL,":");
+                  strcpy(tempEvent->UID,tempStr);
+                  break;
+                }else if(strcmp(tempStr,"DTSTAMP") == 0){
+                  tempDateTime = malloc(sizeof(DateTime));
+
+                  //not sure if this is right becuase its not a pointer in struct
+                  //but gotta do it this way for dynamic allocation so it might be
+                  //some shit like &tempdate or (*tmepdate)... idk
+                  tempEvent->creationDateTime = *tempDateTime;
+                }else if(strcmp(tempStr,"DTSTART") == 0){
+                  tempDateTime = malloc(sizeof(DateTime));
+
+                  tempEvent->startDateTime = *tempDateTime;
+                }else{
+                  addPropertyEvent(tempStr,&tempEvent);
+                }
+
+                break;
+
+                //used when adding to alarm struct
+                case 3:
+
+                break;
+                //error has occurred
+                default:
+                printf("ERROR ICALENDAR OBJECT BEGAN INCORRECT\n");
+              }
+
+            }
 
 
-            tempStr = strtok(NULL,":");
-          //  printf("(then)%s\n",tempStr);
 
-            break;
-
-            //used when adding to alarm struct
-            case 3:
-
-            break;
-            //error has occurred
-            default:
-            printf("ERROR ICALENDAR OBJECT BEGAN INCORRECT\n");
           }
 
+          //resets readLine and copies next line to it. as well resets factor for reallocing readLine
+          //makes it so last line is not processed in loop and is delt with afterwards
+          memset(readLine,0,strlen(readLine));
+          strcat(readLine,bufferLine);
+          lineFactor =1;
         }
-
-
-
-        }
-
-        //resets readLine and copies next line to it. as well resets factor for reallocing readLine
-        //makes it so last line is not processed in loop and is delt with afterwards
-        memset(readLine,0,strlen(readLine));
-        strcat(readLine,bufferLine);
-        lineFactor =1;
       }
 
 
     }
 
     //do stuff with final line here
-    printf("line is \"%s\"\n",readLine);
+    //printf("line is \"%s\"\n",readLine);
 
 
     *obj = tempCal;
@@ -230,25 +280,23 @@ char* printCalendar(const Calendar* obj){
   toRtrn = realloc(toRtrn, (strlen(toRtrn) + strlen(temp))+1);
   strcat(toRtrn,temp);
 
-  //Create an iterator - again, the iterator is allocated on the stack
+  //Create an iterator the iterator is allocated on the stack
 	ListIterator iter = createIterator(obj->properties);
+  //free temp because we're adding the string created by printProperty now
+  free(temp);
 
-	/*
-	Traverse the list using an iterator.
-	nextElement() returns NULL ones we reach the end of the list
-	*/
 	while ((elem = nextElement(&iter)) != NULL){
     Property* tempProp = (Property*)elem;
     temp = printProperty(tempProp);
     strcat(temp,"\n");
     toRtrn = realloc(toRtrn, (strlen(toRtrn) + strlen(temp))+1);
     strcat(toRtrn,temp);
-
+    free(temp);
 	}
 
-  free(temp);
-  return toRtrn;
 
+
+  return toRtrn;
 }
 
 
@@ -291,7 +339,14 @@ ICalErrorCode validateCalendar(const Calendar* obj){
 
 // ************* List helper functions - MUST be implemented ***************
 void deleteEvent(void* toBeDeleted){
+  Event *tempEvent;
 
+  if (toBeDeleted == NULL){
+		return;
+	}
+  tempEvent = (Event*)toBeDeleted;
+  //printf("deleting %s\n",printProperty(tempProp) );
+  free(tempEvent);
 }
 
 
@@ -398,4 +453,24 @@ ICalErrorCode addProperty(char *property, Calendar** obj){
     insertFront((*obj)->properties,newProperty);
 
     return OK;
+}
+
+ICalErrorCode addPropertyEvent(char *property, Event** obj){
+  Property *newProperty = malloc(sizeof(Property));
+  char *tmp;
+  strcpy(newProperty->propName,property);
+
+  //todo add loop to this to take in whole text when it is not just one ":"
+  property = strtok(NULL,":");
+  //realloc to account for size of description becuase of dynamic array in Property struct
+  newProperty = realloc(newProperty,(sizeof(Property) + sizeof(char)*strlen(property)+1));
+  strcpy(newProperty->propDescr,property);
+
+  tmp = printProperty(newProperty);
+  printf("Event property to create: %s\n",tmp);
+  free(tmp);
+
+  insertFront((*obj)->properties,newProperty);
+
+  return OK;
 }
