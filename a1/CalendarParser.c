@@ -113,11 +113,13 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
                 tempEvent = calloc(1,sizeof(Event));
 
                 tempEvent->properties = initializeList(&printProperty,&deleteProperty,&compareProperties);
-                tempEvent->alarms = NULL;
+                tempEvent->alarms = initializeList(&printAlarm,&deleteAlarm,&compareAlarms);
 
               } else if(strcmp(tempStr,"VALARM")==0 && objectLevel ==2){
                 //this is valid
                 tempAlarm = malloc(sizeof(Alarm));
+                tempAlarm->properties = initializeList(&printProperty,&deleteProperty,&compareProperties);
+
               }else{
                 //no valid transformation, print error
               }
@@ -137,6 +139,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
 
               } else if(strcmp(tempStr,"VALARM")==0 && objectLevel ==3){
                 //this is valid and should be adding alarm to current event.
+                insertFront(tempEvent->alarms,tempAlarm);
 
               }else{
                 //no valid transformation, print error
@@ -210,9 +213,21 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
                 }
 
                 break;
-
                 //used when adding to alarm struct
                 case 3:
+                  if(strcmp(tempStr,"ACTION") == 0){
+                    tempStr = strtok(NULL,":");
+                    strcpy(tempAlarm->action,tempStr);
+
+                  }else if(strcmp(tempStr,"TRIGGER") == 0){
+                    tempStr = strtok(NULL,":");
+                    tempAlarm->trigger = malloc(sizeof(char)*strlen(tempStr)+1);
+                    strcpy(tempAlarm->trigger,tempStr);
+                  }else{
+                    //propertie
+                    addPropertyAlarm(tempStr,&tempAlarm);
+                  }
+
 
                 break;
                 //error has occurred
@@ -382,6 +397,9 @@ void deleteEvent(void* toBeDeleted){
   if(tempEvent->properties != NULL){
     freeList(tempEvent->properties);
   }
+  if(tempEvent->alarms != NULL){
+    freeList(tempEvent->alarms);
+  }
   //printf("deleting %s\n",printProperty(tempProp) );
   free(tempEvent);
 }
@@ -397,6 +415,7 @@ char* printEvent(void* toBePrinted){
   char *temp   = NULL;
   void* elem;
   Event* tempEvent = NULL;
+  ListIterator iter;
 
   if(toBePrinted == NULL){
     return NULL;
@@ -408,7 +427,7 @@ char* printEvent(void* toBePrinted){
   toRtrn = calloc(100,sizeof(char));
   temp = calloc(1000,sizeof(char));
 
-  strcpy(toRtrn,"\nBEGIN:VEVENT\n");
+  strcpy(toRtrn,"BEGIN:VEVENT\n");
   sprintf(temp,"UID:%s\n",tempEvent->UID);
 
   toRtrn = realloc(toRtrn, (strlen(toRtrn) + strlen(temp))+1);
@@ -423,7 +442,89 @@ char* printEvent(void* toBePrinted){
   strcat(toRtrn,temp);
 
   //Create an iterator the iterator is allocated on the stack
-	ListIterator iter = createIterator(tempEvent->properties);
+	iter = createIterator(tempEvent->properties);
+  //free temp because we're adding the string created by printProperty now
+  free(temp);
+
+	while ((elem = nextElement(&iter)) != NULL){
+    Property* tempProp = (Property*)elem;
+    temp = printProperty(tempProp);
+    strcat(temp,"\n");
+    toRtrn = realloc(toRtrn, (strlen(toRtrn) + strlen(temp))+1);
+    strcat(toRtrn,temp);
+    free(temp);
+	}
+
+  iter = createIterator(tempEvent->alarms);
+  while ((elem = nextElement(&iter)) != NULL){
+    Alarm* tempAlarm = (Alarm*)elem;
+    temp = printAlarm(tempAlarm);
+    strcat(temp,"\n");
+    toRtrn = realloc(toRtrn, (strlen(toRtrn) + strlen(temp))+1);
+    strcat(toRtrn,temp);
+    free(temp);
+	}
+
+
+  toRtrn = realloc(toRtrn, (strlen(toRtrn) +12));
+  strcat(toRtrn,"END:EVENT");
+
+  return toRtrn;
+
+}
+
+void deleteAlarm(void* toBeDeleted){
+  Alarm *tempAlarm;
+
+  if (toBeDeleted == NULL){
+		return;
+	}
+  tempAlarm = (Alarm*)toBeDeleted;
+  free(tempAlarm->trigger);
+
+  if(tempAlarm->properties != NULL){
+    freeList(tempAlarm->properties);
+  }
+  free(tempAlarm);
+}
+
+int compareAlarms(const void* first, const void* second){
+
+  return 0;
+}
+
+char* printAlarm(void* toBePrinted){
+  char *toRtrn = NULL;
+  char *temp   = NULL;
+  void* elem;
+  Alarm* tempAlarm = NULL;
+  ListIterator iter;
+
+  if(toBePrinted == NULL){
+    return NULL;
+  }
+
+  tempAlarm = (Alarm*)toBePrinted;
+
+//  initilizes values to 0, unlike malloc.
+  toRtrn = calloc(1000,sizeof(char));
+  temp = calloc(201,sizeof(char));
+  strcpy(toRtrn,"BEGIN:VALARM\n");
+  sprintf(temp,"ACTION:%s\n",tempAlarm->action);
+
+  toRtrn = realloc(toRtrn, (strlen(toRtrn) + strlen(temp))+1);
+  strcat(toRtrn,temp);
+
+  sprintf(temp,"TRIGGER:%s\n",tempAlarm->trigger);
+  toRtrn = realloc(toRtrn, (strlen(toRtrn) + strlen(temp))+1);
+  strcat(toRtrn,temp);
+
+  //Create an iterator the iterator is allocated on the stack
+  if(tempAlarm->properties == NULL){
+    printf("tester\n");
+  }
+
+	iter = createIterator(tempAlarm->properties);
   //free temp because we're adding the string created by printProperty now
   free(temp);
 
@@ -436,24 +537,9 @@ char* printEvent(void* toBePrinted){
     free(temp);
 	}
   toRtrn = realloc(toRtrn, (strlen(toRtrn) +12));
-  strcat(toRtrn,"END:EVENT\n");
+  strcat(toRtrn,"END:VALARM");
 
   return toRtrn;
-
-}
-
-void deleteAlarm(void* toBeDeleted){
-
-}
-
-int compareAlarms(const void* first, const void* second){
-
-  return 0;
-}
-
-char* printAlarm(void* toBePrinted){
-
-  return NULL;
 }
 
 
@@ -522,13 +608,13 @@ ICalErrorCode addProperty(char *property, Calendar** obj){
     Property *newProperty = malloc(sizeof(Property));
     char *tmp;
     strcpy(newProperty->propName,property);
-    property = strtok(NULL,":");
+    property = strtok(NULL,"");
     //realloc to account for size of description becuase of dynamic array in Property struct
     newProperty = realloc(newProperty,(sizeof(Property) + sizeof(char)*strlen(property)+1));
     strcpy(newProperty->propDescr,property);
 
     tmp = printProperty(newProperty);
-    printf("property to create: %s\n",tmp);
+    //printf("property to create: %s\n",tmp);
     free(tmp);
 
     insertFront((*obj)->properties,newProperty);
@@ -548,7 +634,25 @@ ICalErrorCode addPropertyEvent(char *property, Event** obj){
   strcpy(newProperty->propDescr,property);
 
   tmp = printProperty(newProperty);
-  printf("Event property to create:%s!\n",tmp);
+  //printf("Event property to create:%s!\n",tmp);
+  free(tmp);
+
+  insertFront((*obj)->properties,newProperty);
+
+  return OK;
+}
+
+ICalErrorCode addPropertyAlarm(char *property, Alarm** obj){
+  Property *newProperty = malloc(sizeof(Property));
+  char *tmp;
+  strcpy(newProperty->propName,property);
+  property = strtok(NULL,"");
+  //realloc to account for size of description becuase of dynamic array in Property struct
+  newProperty = realloc(newProperty,(sizeof(Property) + sizeof(char)*strlen(property)+1));
+  strcpy(newProperty->propDescr,property);
+
+  tmp = printProperty(newProperty);
+  //printf("Alarm property to create: %s\n",tmp);
   free(tmp);
 
   insertFront((*obj)->properties,newProperty);

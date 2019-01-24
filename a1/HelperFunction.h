@@ -15,4 +15,6 @@ ICalErrorCode addProperty(char *property, Calendar** obj);
 
 ICalErrorCode addPropertyEvent(char *property, Event** obj);
 
+ICalErrorCode addPropertyAlarm(char *property, Alarm** obj);
+
 #endif
