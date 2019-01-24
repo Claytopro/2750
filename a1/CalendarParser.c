@@ -24,8 +24,9 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
     FILE *fp;
     Calendar *tempCal = NULL;
     Property *tempProp = NULL;
-    Event *tempEvent = NULL;
-    DateTime *tempDateTime = NULL;
+    Event *tempEvent;
+    Alarm *tempAlarm;
+
     int lineFactor, objectLevel, fileLen;
     //used to hold full line. must be dynamically
     // allocated to allow for mutipel folded lines
@@ -46,6 +47,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
     // TODO : check for malloc erros
     tempProp = malloc(sizeof(Property));
     tempCal = malloc(sizeof(Calendar));
+
     //OLD:readLine = malloc(sizeof(char)*(80*lineFactor));
     //use calloc to fix valgring conditional jump errors
     readLine = calloc(80,sizeof(char));
@@ -54,7 +56,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
 
     //intilize properties linkedlist in calendar
     tempCal->properties = initializeList(&printProperty,&deleteProperty,&compareProperties);
-
+    tempCal->events = initializeList(&printEvent,&deleteEvent,&compareEvents);
     /*open file for reading*/
     fp = fopen(fileName, "r+");
 
@@ -106,12 +108,16 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
                 //this is valid
               }else if(strcmp(tempStr,"VEVENT")==0 && objectLevel ==1){
                 //valid transformation
-                printf("allocate event\n");
-                tempEvent = malloc(sizeof(Event));
+
+                //calloc should initilize datetime so i dont get valgrind erros
+                tempEvent = calloc(1,sizeof(Event));
+
                 tempEvent->properties = initializeList(&printProperty,&deleteProperty,&compareProperties);
+                tempEvent->alarms = NULL;
 
               } else if(strcmp(tempStr,"VALARM")==0 && objectLevel ==2){
                 //this is valid
+                tempAlarm = malloc(sizeof(Alarm));
               }else{
                 //no valid transformation, print error
               }
@@ -126,7 +132,8 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
               }else if(strcmp(tempStr,"VEVENT")==0 && objectLevel ==2){
                 //valid transformation and should add Event to Calendar event linkedlist
                 /*TODO: add events to list*/
-                printf("ending:uid:%s\n",tempEvent->UID);
+
+                insertFront(tempCal->events,tempEvent);
 
               } else if(strcmp(tempStr,"VALARM")==0 && objectLevel ==3){
                 //this is valid and should be adding alarm to current event.
@@ -175,16 +182,29 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
                   strcpy(tempEvent->UID,tempStr);
                   break;
                 }else if(strcmp(tempStr,"DTSTAMP") == 0){
-                  tempDateTime = malloc(sizeof(DateTime));
+                  tempStr = strtok(NULL,":");
 
+                  strncpy(tempEvent->creationDateTime.date,tempStr,8);
+                  strncpy(tempEvent->creationDateTime.time,tempStr+9,6);
+
+                  if(tempStr[strlen(tempStr)-1] == 'Z'){
+                    tempEvent->creationDateTime.UTC = 1;
+                  }
+
+                  //printf("dates and such:%s:%s:%d:\n",tempDateTime->date,tempDateTime->time,tempDateTime->UTC);
                   //not sure if this is right becuase its not a pointer in struct
                   //but gotta do it this way for dynamic allocation so it might be
                   //some shit like &tempdate or (*tmepdate)... idk
-                  tempEvent->creationDateTime = *tempDateTime;
-                }else if(strcmp(tempStr,"DTSTART") == 0){
-                  tempDateTime = malloc(sizeof(DateTime));
 
-                  tempEvent->startDateTime = *tempDateTime;
+                }else if(strcmp(tempStr,"DTSTART") == 0){
+                  tempStr = strtok(NULL,":");
+
+                  strncpy(tempEvent->startDateTime.date,tempStr,8);
+                  strncpy(tempEvent->startDateTime.time,tempStr+9,6);
+
+                  if(tempStr[strlen(tempStr)-1] == 'Z'){
+                    tempEvent->startDateTime.UTC = 1;
+                  }
                 }else{
                   addPropertyEvent(tempStr,&tempEvent);
                 }
@@ -248,6 +268,9 @@ void deleteCalendar(Calendar* obj){
   if(obj->properties != NULL){
     freeList(obj->properties);
   }
+  if(obj->events != NULL){
+    freeList(obj->events);
+  }
 
   free(obj);
 
@@ -264,6 +287,7 @@ char* printCalendar(const Calendar* obj){
   char *toRtrn;
   char *temp;
   void* elem;
+  ListIterator iter;
 
 
 //  initilizes values to 0, unlike malloc.
@@ -281,7 +305,7 @@ char* printCalendar(const Calendar* obj){
   strcat(toRtrn,temp);
 
   //Create an iterator the iterator is allocated on the stack
-	ListIterator iter = createIterator(obj->properties);
+	iter = createIterator(obj->properties);
   //free temp because we're adding the string created by printProperty now
   free(temp);
 
@@ -294,8 +318,17 @@ char* printCalendar(const Calendar* obj){
     free(temp);
 	}
 
-
-
+  iter = createIterator(obj->events);
+  while ((elem = nextElement(&iter)) != NULL){
+    Event* tempEvent = (Event*)elem;
+    temp = printEvent(tempEvent);
+    strcat(temp,"\n");
+    toRtrn = realloc(toRtrn, (strlen(toRtrn) + strlen(temp))+1);
+    strcat(toRtrn,temp);
+    free(temp);
+	}
+  toRtrn = realloc(toRtrn, (strlen(toRtrn) +15));
+  strcat(toRtrn,"END:VCALENDAR\n");
   return toRtrn;
 }
 
@@ -345,6 +378,10 @@ void deleteEvent(void* toBeDeleted){
 		return;
 	}
   tempEvent = (Event*)toBeDeleted;
+
+  if(tempEvent->properties != NULL){
+    freeList(tempEvent->properties);
+  }
   //printf("deleting %s\n",printProperty(tempProp) );
   free(tempEvent);
 }
@@ -356,9 +393,53 @@ int compareEvents(const void* first, const void* second){
 }
 
 char* printEvent(void* toBePrinted){
+  char *toRtrn = NULL;
+  char *temp   = NULL;
+  void* elem;
+  Event* tempEvent = NULL;
 
+  if(toBePrinted == NULL){
+    return NULL;
+  }
 
-  return NULL;
+  tempEvent = (Event*)toBePrinted;
+
+//  initilizes values to 0, unlike malloc.
+  toRtrn = calloc(100,sizeof(char));
+  temp = calloc(1000,sizeof(char));
+
+  strcpy(toRtrn,"\nBEGIN:VEVENT\n");
+  sprintf(temp,"UID:%s\n",tempEvent->UID);
+
+  toRtrn = realloc(toRtrn, (strlen(toRtrn) + strlen(temp))+1);
+  strcat(toRtrn,temp);
+
+  sprintf(temp,"DTSTAMP:%sT%s%d\n",tempEvent->creationDateTime.date,tempEvent->creationDateTime.time,tempEvent->creationDateTime.UTC);
+  toRtrn = realloc(toRtrn, (strlen(toRtrn) + strlen(temp))+1);
+  strcat(toRtrn,temp);
+
+  sprintf(temp,"DTSTART:%sT%s%d\n",tempEvent->creationDateTime.date,tempEvent->creationDateTime.time,tempEvent->creationDateTime.UTC);
+  toRtrn = realloc(toRtrn, (strlen(toRtrn) + strlen(temp))+1);
+  strcat(toRtrn,temp);
+
+  //Create an iterator the iterator is allocated on the stack
+	ListIterator iter = createIterator(tempEvent->properties);
+  //free temp because we're adding the string created by printProperty now
+  free(temp);
+
+	while ((elem = nextElement(&iter)) != NULL){
+    Property* tempProp = (Property*)elem;
+    temp = printProperty(tempProp);
+    strcat(temp,"\n");
+    toRtrn = realloc(toRtrn, (strlen(toRtrn) + strlen(temp))+1);
+    strcat(toRtrn,temp);
+    free(temp);
+	}
+  toRtrn = realloc(toRtrn, (strlen(toRtrn) +12));
+  strcat(toRtrn,"END:EVENT\n");
+
+  return toRtrn;
+
 }
 
 void deleteAlarm(void* toBeDeleted){
@@ -460,14 +541,14 @@ ICalErrorCode addPropertyEvent(char *property, Event** obj){
   char *tmp;
   strcpy(newProperty->propName,property);
 
-  //todo add loop to this to take in whole text when it is not just one ":"
-  property = strtok(NULL,":");
+  //will turn the rest of the tokenized thing into the description of property
+  property = strtok(NULL,"");
   //realloc to account for size of description becuase of dynamic array in Property struct
   newProperty = realloc(newProperty,(sizeof(Property) + sizeof(char)*strlen(property)+1));
   strcpy(newProperty->propDescr,property);
 
   tmp = printProperty(newProperty);
-  printf("Event property to create: %s\n",tmp);
+  printf("Event property to create:%s!\n",tmp);
   free(tmp);
 
   insertFront((*obj)->properties,newProperty);
