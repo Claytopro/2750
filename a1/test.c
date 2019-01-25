@@ -13,7 +13,7 @@ int main(){
 
   if(createCalendar("test.ics", &tester) != OK){
     printf("baddd\n");
-    deleteCalendar(tester);
+  //  deleteCalendar(tester);
   }else{
 
 

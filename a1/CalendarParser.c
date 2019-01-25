@@ -163,9 +163,22 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
                   //moves to next part of string which should be version number
                   tempStr = strtok(NULL,":");
 
-                  if(tempStr == NULL || tempCal->version != 0.0000){
+                  //if version already exists
+                  if( tempCal->version != 0.0000){
+                    printf("doop version\n");
+                    deleteCalendar(tempCal);
+                    (*obj) = NULL;
+                    free(tempProp);
+                    free(fileExtension);
+                    free(readLine);
+                    fclose(fp);
+                    return DUP_VER;
+                  }
+
+                  if(tempStr == NULL){
                     printf("INVALUD VERSION\n");
-                    *obj = tempCal;
+                    deleteCalendar(tempCal);
+                    (*obj) = NULL;
                     //TODO move this(free tempProp) shit into delete calendar function once we get linked list codes
                     free(tempProp);
                     free(fileExtension);
@@ -178,7 +191,8 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
 
                   if(tempCal->version == 0.0){
                     printf("INVALUD VERSION\n");
-                    *obj = tempCal;
+                    deleteCalendar(tempCal);
+                    (*obj) = NULL;
                     //TODO move this(free tempProp) shit into delete calendar function once we get linked list codes
                     free(tempProp);
                     free(fileExtension);
@@ -189,7 +203,29 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
                   break;
 
                 } else if(strcmp(tempStr,"PRODID") == 0){
+                  //if PRODID already Exists so we return Error Code
+                  if(strcmp(tempCal->prodID,"") != 0){
+                    printf("DOOP prodid\n");
+                    deleteCalendar(tempCal);
+                    (*obj) = NULL;
+                    free(tempProp);
+                    free(fileExtension);
+                    free(readLine);
+                    fclose(fp);
+                    return DUP_PRODID;
+                  }
+
                   tempStr = strtok(NULL,":");
+                  //no prodid so we return error
+                  if(tempStr == NULL){
+                    deleteCalendar(tempCal);
+                    (*obj) = NULL;
+                    free(fileExtension);
+                    free(readLine);
+                    fclose(fp);
+                    return INV_PRODID;
+                  }
+
                   strcpy(tempCal->prodID,tempStr);
                   //TODO: remove this print
                   //printf("proid is %s\n",tempCal->prodID);
@@ -633,7 +669,7 @@ char* printDate(void* toBePrinted){
 
 ICalErrorCode addProperty(char *property, Calendar** obj){
     Property *newProperty = malloc(sizeof(Property));
-    char *tmp;
+    //char *tmp;
     strcpy(newProperty->propName,property);
     property = strtok(NULL,"");
     //realloc to account for size of description becuase of dynamic array in Property struct
@@ -651,7 +687,7 @@ ICalErrorCode addProperty(char *property, Calendar** obj){
 
 ICalErrorCode addPropertyEvent(char *property, Event** obj){
   Property *newProperty = malloc(sizeof(Property));
-  char *tmp;
+  //  char *tmp;
   strcpy(newProperty->propName,property);
 
   //will turn the rest of the tokenized thing into the description of property
@@ -671,7 +707,7 @@ ICalErrorCode addPropertyEvent(char *property, Event** obj){
 
 ICalErrorCode addPropertyAlarm(char *property, Alarm** obj){
   Property *newProperty = malloc(sizeof(Property));
-  char *tmp;
+  //char *tmp;
   strcpy(newProperty->propName,property);
   property = strtok(NULL,"");
   //realloc to account for size of description becuase of dynamic array in Property struct
