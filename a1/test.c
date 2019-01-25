@@ -11,18 +11,25 @@ int main(){
   Calendar *tester;
   char *calendarToPtr;
 
-  createCalendar("test.ics", &tester);
+  if(createCalendar("test.ics", &tester) != OK){
+    printf("baddd\n");
+    deleteCalendar(tester);
+  }else{
 
 
-  calendarToPtr = printCalendar(tester);
-  printf("%s\n",calendarToPtr);
+    calendarToPtr = printCalendar(tester);
+    printf("%s\n",calendarToPtr);
 
-  if(calendarToPtr != NULL){
-  //  printf("Freeing calendarString\n" );
-    free(calendarToPtr);
+    if(calendarToPtr != NULL){
+      //  printf("Freeing calendarString\n" );
+      free(calendarToPtr);
+    }
+
+    deleteCalendar(tester);
+
+
   }
 
-   deleteCalendar(tester);
 
 
   return 0;

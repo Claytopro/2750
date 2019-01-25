@@ -19,11 +19,11 @@ libcal.so: CalendarParser.o liblist.so
 CalendarParser.o: CalendarParser.c CalendarParser.h
 	$(CC) $(CFLAGS) -c -fpic CalendarParser.c
 
-liblist.so: LinkedListAPI.o
-	$(CC) -shared -o $(BINDIR)liblist.so LinkedListAPI.o
-
 LinkedListAPI.o: LinkedListAPI.c LinkedListAPI.h
 	$(CC) $(CFLAGS) -c -fpic LinkedListAPI.c
+
+liblist.so: LinkedListAPI.o
+	$(CC) -shared -o $(BINDIR)liblist.so LinkedListAPI.o
 
 clean:
 	rm -rf test *.o $(BINDIR)*.so

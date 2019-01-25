@@ -27,7 +27,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
     Event *tempEvent;
     Alarm *tempAlarm;
 
-    int lineFactor, objectLevel, fileLen;
+    int lineFactor, objectLevel, fileLen, lineLength;
     //used to hold full line. must be dynamically
     // allocated to allow for mutipel folded lines
     char *readLine = NULL;
@@ -46,7 +46,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
 
     // TODO : check for malloc erros
     tempProp = malloc(sizeof(Property));
-    tempCal = malloc(sizeof(Calendar));
+    tempCal = calloc(1,sizeof(Calendar));
 
     //OLD:readLine = malloc(sizeof(char)*(80*lineFactor));
     //use calloc to fix valgring conditional jump errors
@@ -75,6 +75,12 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
 
     /*reads through each character in the file*/
     while(fgets(bufferLine, 80,fp)){
+      //check line ending is valid
+      lineLength = strlen(bufferLine);
+      if(bufferLine[lineLength-1] == '\r' && bufferLine[lineLength-2] == '\n'){
+        printf("invalid line  :%s:\n",bufferLine);
+        return INV_FILE;
+      }
       //remove newline, should be fine for new line at beginnign becayse fgets will read until then
       bufferLine[strcspn(bufferLine, "\r\n")] = 0;
 
@@ -95,7 +101,8 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
           //now readLine is the full line! greeat
           //this is working : printf("line is \"%s\"\n",readLine );
 
-          tempStr = strtok(readLine,":");
+          tempStr = strtok(readLine,":;");
+          //printf("%s\n",tempStr);
 
           if(tempStr != NULL){
 
@@ -155,10 +162,28 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
                 if(strcmp(tempStr,"VERSION") == 0){
                   //moves to next part of string which should be version number
                   tempStr = strtok(NULL,":");
-                  tempCal->version = atof(tempStr);
-                  if(tempCal->version == 0.0){
-                    //atof will default to 0.0 when a string cant be converted to float
+
+                  if(tempStr == NULL || tempCal->version != 0.0000){
                     printf("INVALUD VERSION\n");
+                    *obj = tempCal;
+                    //TODO move this(free tempProp) shit into delete calendar function once we get linked list codes
+                    free(tempProp);
+                    free(fileExtension);
+                    free(readLine);
+                    fclose(fp);
+                    return INV_VER;
+                  }
+                  //atof will default to 0.0 when a string cant be converted to float
+                  tempCal->version = atof(tempStr);
+
+                  if(tempCal->version == 0.0){
+                    printf("INVALUD VERSION\n");
+                    *obj = tempCal;
+                    //TODO move this(free tempProp) shit into delete calendar function once we get linked list codes
+                    free(tempProp);
+                    free(fileExtension);
+                    free(readLine);
+                    fclose(fp);
                     return INV_VER;
                   }
                   break;
@@ -296,7 +321,9 @@ void deleteCalendar(Calendar* obj){
  *@pre Calendar object exists, is not null, and is valid
  *@post Calendar has not been modified in any way, and a string representing the Calndar contents has been created
  *@return a string contaning a humanly readable representation of a Calendar object
- *@param obj - a pointer to a Calendar struct
+ *@param obj - a  if(obj == NULL){
+      return "Calendar Empty\n";
+  } pointer to a Calendar struct
 **/
 char* printCalendar(const Calendar* obj){
   char *toRtrn;
@@ -613,9 +640,9 @@ ICalErrorCode addProperty(char *property, Calendar** obj){
     newProperty = realloc(newProperty,(sizeof(Property) + sizeof(char)*strlen(property)+1));
     strcpy(newProperty->propDescr,property);
 
-    tmp = printProperty(newProperty);
-    //printf("property to create: %s\n",tmp);
-    free(tmp);
+    // tmp = printProperty(newProperty);
+    // //printf("property to create: %s\n",tmp);
+    // free(tmp);
 
     insertFront((*obj)->properties,newProperty);
 
@@ -633,9 +660,9 @@ ICalErrorCode addPropertyEvent(char *property, Event** obj){
   newProperty = realloc(newProperty,(sizeof(Property) + sizeof(char)*strlen(property)+1));
   strcpy(newProperty->propDescr,property);
 
-  tmp = printProperty(newProperty);
-  //printf("Event property to create:%s!\n",tmp);
-  free(tmp);
+  // tmp = printProperty(newProperty);
+  // //printf("Event property to create:%s!\n",tmp);
+  // free(tmp);
 
   insertFront((*obj)->properties,newProperty);
 
@@ -651,9 +678,9 @@ ICalErrorCode addPropertyAlarm(char *property, Alarm** obj){
   newProperty = realloc(newProperty,(sizeof(Property) + sizeof(char)*strlen(property)+1));
   strcpy(newProperty->propDescr,property);
 
-  tmp = printProperty(newProperty);
-  //printf("Alarm property to create: %s\n",tmp);
-  free(tmp);
+  // tmp = printProperty(newProperty);
+  // //printf("Alarm property to create: %s\n",tmp);
+  // free(tmp);
 
   insertFront((*obj)->properties,newProperty);
 
