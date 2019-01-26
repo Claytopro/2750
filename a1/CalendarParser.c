@@ -23,7 +23,6 @@ By: CLayton Provan
 ICalErrorCode createCalendar(char* fileName, Calendar** obj){
     FILE *fp;
     Calendar *tempCal = NULL;
-    Property *tempProp = NULL;
     Event *tempEvent;
     Alarm *tempAlarm;
 
@@ -45,7 +44,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
 
 
     // TODO : check for malloc erros
-    tempProp = malloc(sizeof(Property));
+
     tempCal = calloc(1,sizeof(Calendar));
 
     //OLD:readLine = malloc(sizeof(char)*(80*lineFactor));
@@ -142,11 +141,16 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
                 //valid transformation and should add Event to Calendar event linkedlist
                 /*TODO: add events to list*/
 
-                insertFront(tempCal->events,tempEvent);
+                insertBack(tempCal->events,tempEvent);
 
               } else if(strcmp(tempStr,"VALARM")==0 && objectLevel ==3){
                 //this is valid and should be adding alarm to current event.
-                insertFront(tempEvent->alarms,tempAlarm);
+                if(tempAlarm->trigger == NULL || strcmp(tempAlarm->action, "") == 0){
+                    printf("no trig or action\n");
+
+                    return INV_ALARM;
+                }
+                insertBack(tempEvent->alarms,tempAlarm);
 
               }else{
                 //no valid transformation, print error
@@ -161,14 +165,14 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
 
                 if(strcmp(tempStr,"VERSION") == 0){
                   //moves to next part of string which should be version number
-                  tempStr = strtok(NULL,":");
+                  tempStr = strtok(NULL,"");
 
                   //if version already exists
                   if( tempCal->version != 0.0000){
                     printf("doop version\n");
                     deleteCalendar(tempCal);
                     (*obj) = NULL;
-                    free(tempProp);
+
                     free(fileExtension);
                     free(readLine);
                     fclose(fp);
@@ -179,8 +183,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
                     printf("INVALUD VERSION\n");
                     deleteCalendar(tempCal);
                     (*obj) = NULL;
-                    //TODO move this(free tempProp) shit into delete calendar function once we get linked list codes
-                    free(tempProp);
+
                     free(fileExtension);
                     free(readLine);
                     fclose(fp);
@@ -193,8 +196,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
                     printf("INVALUD VERSION\n");
                     deleteCalendar(tempCal);
                     (*obj) = NULL;
-                    //TODO move this(free tempProp) shit into delete calendar function once we get linked list codes
-                    free(tempProp);
+
                     free(fileExtension);
                     free(readLine);
                     fclose(fp);
@@ -208,14 +210,13 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
                     printf("DOOP prodid\n");
                     deleteCalendar(tempCal);
                     (*obj) = NULL;
-                    free(tempProp);
                     free(fileExtension);
                     free(readLine);
                     fclose(fp);
                     return DUP_PRODID;
                   }
 
-                  tempStr = strtok(NULL,":");
+                  tempStr = strtok(NULL,"");
                   //no prodid so we return error
                   if(tempStr == NULL){
                     deleteCalendar(tempCal);
@@ -242,11 +243,11 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
                 case 2:
                 //create new event, add the shit.
                 if(strcmp(tempStr,"UID") == 0){
-                  tempStr = strtok(NULL,":");
+                  tempStr = strtok(NULL,"");
                   strcpy(tempEvent->UID,tempStr);
                   break;
                 }else if(strcmp(tempStr,"DTSTAMP") == 0){
-                  tempStr = strtok(NULL,":");
+                  tempStr = strtok(NULL,"");
 
                   strncpy(tempEvent->creationDateTime.date,tempStr,8);
                   strncpy(tempEvent->creationDateTime.time,tempStr+9,6);
@@ -255,13 +256,21 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
                     tempEvent->creationDateTime.UTC = 1;
                   }
 
-                  //printf("dates and such:%s:%s:%d:\n",tempDateTime->date,tempDateTime->time,tempDateTime->UTC);
-                  //not sure if this is right becuase its not a pointer in struct
-                  //but gotta do it this way for dynamic allocation so it might be
-                  //some shit like &tempdate or (*tmepdate)... idk
+                  if(isValidDateTime(tempEvent->creationDateTime)==1){
+                    deleteCalendar(tempCal);
+                    (*obj) = NULL;
+                    free(fileExtension);
+                    free(readLine);
+                    //down two levels of abstractions so we delete these
+
+                    deleteEvent(tempEvent);
+                    fclose(fp);
+                    return INV_DT;
+                  }
+
 
                 }else if(strcmp(tempStr,"DTSTART") == 0){
-                  tempStr = strtok(NULL,":");
+                  tempStr = strtok(NULL,"");
 
                   strncpy(tempEvent->startDateTime.date,tempStr,8);
                   strncpy(tempEvent->startDateTime.time,tempStr+9,6);
@@ -269,6 +278,18 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
                   if(tempStr[strlen(tempStr)-1] == 'Z'){
                     tempEvent->startDateTime.UTC = 1;
                   }
+
+                  if(isValidDateTime(tempEvent->startDateTime)==1){
+                    deleteCalendar(tempCal);
+                    (*obj) = NULL;
+                    free(fileExtension);
+                    free(readLine);
+                    //down two levels of abstractions so we delete these
+                    deleteEvent(tempEvent);
+                    fclose(fp);
+                    return INV_DT;
+                  }
+
                 }else{
                   addPropertyEvent(tempStr,&tempEvent);
                 }
@@ -277,7 +298,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
                 //used when adding to alarm struct
                 case 3:
                   if(strcmp(tempStr,"ACTION") == 0){
-                    tempStr = strtok(NULL,":");
+                    tempStr = strtok(NULL,"");
                     strcpy(tempAlarm->action,tempStr);
 
                   }else if(strcmp(tempStr,"TRIGGER") == 0){
@@ -286,7 +307,18 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
                     strcpy(tempAlarm->trigger,tempStr);
                   }else{
                     //propertie
-                    addPropertyAlarm(tempStr,&tempAlarm);
+                    if(addPropertyAlarm(tempStr,&tempAlarm) == INV_ALARM){
+
+                      deleteCalendar(tempCal);
+                      (*obj) = NULL;
+                      free(fileExtension);
+                      free(readLine);
+                      //down two levels of abstractions so we delete these
+                      deleteAlarm(tempAlarm);
+                      deleteEvent(tempEvent);
+                      fclose(fp);
+                      return INV_ALARM;
+                    }
                   }
 
 
@@ -319,8 +351,6 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
 
     *obj = tempCal;
 
-    //TODO move this(free tempProp) shit into delete calendar function once we get linked list codes
-    free(tempProp);
     free(fileExtension);
     free(readLine);
     fclose(fp);
@@ -336,11 +366,6 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
  *@param obj - a pointer to a Calendar struct
 **/
 void deleteCalendar(Calendar* obj){
-
-// causes error. dont know why
-//  free(obj->prodID);
-
-//change to dlete list
   if(obj->properties != NULL){
     freeList(obj->properties);
   }
@@ -349,7 +374,6 @@ void deleteCalendar(Calendar* obj){
   }
 
   free(obj);
-
 }
 
 
@@ -476,6 +500,7 @@ int compareEvents(const void* first, const void* second){
 char* printEvent(void* toBePrinted){
   char *toRtrn = NULL;
   char *temp   = NULL;
+  char *tempDT = NULL;
   void* elem;
   Event* tempEvent = NULL;
   ListIterator iter;
@@ -496,13 +521,17 @@ char* printEvent(void* toBePrinted){
   toRtrn = realloc(toRtrn, (strlen(toRtrn) + strlen(temp))+1);
   strcat(toRtrn,temp);
 
-  sprintf(temp,"DTSTAMP:%sT%s%d\n",tempEvent->creationDateTime.date,tempEvent->creationDateTime.time,tempEvent->creationDateTime.UTC);
+  tempDT = printDate(&(tempEvent->creationDateTime));
+  sprintf(temp,"DTSTAMP:%s\n",tempDT);
   toRtrn = realloc(toRtrn, (strlen(toRtrn) + strlen(temp))+1);
   strcat(toRtrn,temp);
+  free(tempDT);
 
-  sprintf(temp,"DTSTART:%sT%s%d\n",tempEvent->creationDateTime.date,tempEvent->creationDateTime.time,tempEvent->creationDateTime.UTC);
+  tempDT = printDate(&(tempEvent->startDateTime));
+  sprintf(temp,"DTSTART:%s\n",tempDT);
   toRtrn = realloc(toRtrn, (strlen(toRtrn) + strlen(temp))+1);
   strcat(toRtrn,temp);
+  free(tempDT);
 
   //Create an iterator the iterator is allocated on the stack
 	iter = createIterator(tempEvent->properties);
@@ -613,7 +642,7 @@ void deleteProperty(void* toBeDeleted){
 		return;
 	}
   tempProp = (Property*)toBeDeleted;
-  //printf("deleting %s\n",printProperty(tempProp) );
+  //printf("deleting %s\n",printProperty(//tempProp) );
   free(tempProp);
 }
 
@@ -662,8 +691,20 @@ int compareDates(const void* first, const void* second){
 }
 
 char* printDate(void* toBePrinted){
+  DateTime *tempDate;
+  char *toRtrn;
 
-  return NULL;
+  if(toBePrinted == NULL){
+    return NULL;
+  }
+
+  tempDate = (DateTime*)toBePrinted;
+
+
+  toRtrn = calloc(1,sizeof(DateTime)+1);
+  sprintf(toRtrn,"%sT%s%c",tempDate->date,tempDate->time,dateBoolToChar(tempDate->UTC));
+
+  return toRtrn;
 }
 
 
@@ -710,6 +751,13 @@ ICalErrorCode addPropertyAlarm(char *property, Alarm** obj){
   //char *tmp;
   strcpy(newProperty->propName,property);
   property = strtok(NULL,"");
+
+  //indicates malformed
+  if(property == NULL){
+    deleteProperty(newProperty);
+    return INV_ALARM;
+  }
+
   //realloc to account for size of description becuase of dynamic array in Property struct
   newProperty = realloc(newProperty,(sizeof(Property) + sizeof(char)*strlen(property)+1));
   strcpy(newProperty->propDescr,property);
@@ -721,4 +769,30 @@ ICalErrorCode addPropertyAlarm(char *property, Alarm** obj){
   insertFront((*obj)->properties,newProperty);
 
   return OK;
+}
+
+
+char dateBoolToChar(int z){
+  if(z == 1){
+    return 'Z';
+  }
+
+  return '\0';
+}
+// return 1 if invalid
+int isValidDateTime(DateTime obj){
+    int i;
+    for(i=0;i<8;i++){
+      if(isdigit(obj.date[i]) == 0){
+        return 1;
+      }
+    }
+
+    for(i=0;i<6;i++){
+      if(isdigit(obj.time[i]) == 0){
+        return 1;
+      }
+    }
+
+    return 0;
 }
