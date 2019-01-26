@@ -127,7 +127,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
 
               } else if(strcmp(tempStr,"VALARM")==0 && objectLevel ==2){
                 //this is valid
-                tempAlarm = malloc(sizeof(Alarm));
+                tempAlarm = calloc(1,sizeof(Alarm));
                 tempAlarm->properties = initializeList(&printProperty,&deleteProperty,&compareProperties);
 
               }else{
@@ -190,6 +190,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
                       printf("INV ALARM\n" );
                       (*obj) = NULL;
                       deleteCalendar(tempCal);
+                      deleteEvent(tempEvent);
                       deleteAlarm(tempAlarm);
                       free(fileExtension);
                       free(readLine);
@@ -200,6 +201,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
                       printf("INV ALARM\n" );
                       (*obj) = NULL;
                       deleteCalendar(tempCal);
+                      deleteEvent(tempEvent);
                       deleteAlarm(tempAlarm);
                       free(fileExtension);
                       free(readLine);
@@ -522,6 +524,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
               printf("INV ALARM\n" );
               (*obj) = NULL;
               deleteCalendar(tempCal);
+              deleteEvent(tempEvent);
               deleteAlarm(tempAlarm);
               free(fileExtension);
               free(readLine);
@@ -532,6 +535,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
               printf("INV ALARM\n" );
               (*obj) = NULL;
               deleteCalendar(tempCal);
+              deleteEvent(tempEvent);
               deleteAlarm(tempAlarm);
               free(fileExtension);
               free(readLine);
@@ -780,11 +784,13 @@ void deleteAlarm(void* toBeDeleted){
 		return;
 	}
   tempAlarm = (Alarm*)toBeDeleted;
-  free(tempAlarm->trigger);
-
-  if(tempAlarm->properties != NULL){
-    freeList(tempAlarm->properties);
+  if(tempAlarm->trigger != NULL){
+    free(tempAlarm->trigger);
   }
+
+
+    freeList(tempAlarm->properties);
+
   free(tempAlarm);
 }
 
