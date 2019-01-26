@@ -11,7 +11,11 @@ int main(){
   Calendar *tester;
   char *calendarToPtr;
 
+
   if(createCalendar("test.ics", &tester) != OK){
+    if(tester != NULL){
+      printf("calendar not set to null on erro\n");
+    }
     printf("baddd\n");
   //  deleteCalendar(tester);
   }else{
