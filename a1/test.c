@@ -12,7 +12,7 @@ int main(){
   char *calendarToPtr;
 
 
-  if(createCalendar("test.ics", &tester) != OK){
+  if(createCalendar("test.txt", &tester) != OK){
     if(tester != NULL){
       printf("calendar not set to null on erro\n");
     }
@@ -20,16 +20,18 @@ int main(){
   //  deleteCalendar(tester);
   }else{
 
+    if(tester != NULL){
+      calendarToPtr = printCalendar(tester);
+      printf("%s\n",calendarToPtr);
 
-    calendarToPtr = printCalendar(tester);
-    printf("%s\n",calendarToPtr);
+      if(calendarToPtr != NULL){
+        //  printf("Freeing calendarString\n" );
+        free(calendarToPtr);
+      }
 
-    if(calendarToPtr != NULL){
-      //  printf("Freeing calendarString\n" );
-      free(calendarToPtr);
+      deleteCalendar(tester);
+
     }
-
-    deleteCalendar(tester);
 
 
   }

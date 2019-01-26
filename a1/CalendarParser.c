@@ -67,7 +67,14 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
 
     if( fp == NULL ||  strcmp(".ics",fileExtension) != 0){
       /* TODO:Change TO ERROR CODE */
+      deleteCalendar(tempCal);
+      (*obj) = NULL;
       printf("ERROR, COUND NOT OPEN FILE \n");
+      free(fileExtension);
+      free(readLine);
+      if(fp != NULL){
+        fclose(fp);
+      }
       return INV_FILE;
     }
 
