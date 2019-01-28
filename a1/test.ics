@@ -4,19 +4,11 @@ PRODID:-//hacksw/handcal//NONSGML v1.0//EN
 BEGIN:VEVENT
 UID:uid1@example.com
 DTSTAMP:19970714T170000Z
-ORGANIZER;CN=John Doe:MAILTO:john.doe@example.com
+ORGANIZER;CN=Jimmy Johnson:
+ MAILTO:john.doe@example.com
 DTSTART:19970714T170000Z
 DTEND:19970715T035959Z
-BEGIN:VALARM
-TRIGGER:dasd
-TIME:19970317T133000Z
-REPEAT:4
-DURATION;d
-ACTION:AUDIO
-ATTACH:FMTTYPE=audio/basic:ftp://example.com/pub/sounds/bell-01.aud
-END:VALARM
 CLASS:PUBLIC
-SUMMARY:Bastille Day Party
+SUMMARY:Lorem ipsum dolor sit amet, consectetur adipiscing elit.
 END:VEVENT
-POO:sadasd
 END:VCALENDAR

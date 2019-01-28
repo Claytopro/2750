@@ -23,8 +23,8 @@ By: CLayton Provan
 ICalErrorCode createCalendar(char* fileName, Calendar** obj){
     FILE *fp;
     Calendar *tempCal = NULL;
-    Event *tempEvent;
-    Alarm *tempAlarm;
+    Event *tempEvent  = NULL;
+    Alarm *tempAlarm  = NULL;
 
     int lineFactor, objectLevel, fileLen, lineLength;
     //used to hold full line. must be dynamically
@@ -77,16 +77,25 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
       }
       return INV_FILE;
     }
+    //fileExtension no longer used
+    free(fileExtension);
+
 
 
     /*reads through each character in the file*/
     while(fgets(bufferLine, 80,fp)){
-
-      //check line ending is valid
       lineLength = strlen(bufferLine);
-      if(bufferLine[lineLength-1] == '\r' && bufferLine[lineLength-2] == '\n'){
+
+      //check for (CRLF) /r/n line ending
+      if(bufferLine[lineLength-1] != '\n' || bufferLine[lineLength-2] != '\r'){
         printf("invalid line  :%s:\n",bufferLine);
         //add freeing shit here
+        (*obj) = NULL;
+        free(readLine);
+        deleteEvent(tempEvent);
+        deleteAlarm(tempAlarm);
+        deleteCalendar(tempCal);
+        fclose(fp);
         return INV_FILE;
       }
       //remove newline, should be fine for new line at beginnign becayse fgets will read until then
@@ -120,6 +129,17 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
               //used to change what kind of struct is being created
               //cal (1), event(2), Alarma(3)
               tempStr = strtok(NULL,":");
+              if(tempStr == NULL){
+                printf("mallformed end\n");
+                deleteCalendar(tempCal);
+                (*obj)=NULL;
+                deleteEvent(tempEvent);
+                deleteAlarm(tempAlarm);
+
+                free(readLine);
+                fclose(fp);
+                return OTHER_ERROR;
+              }
 
               if(strcmp(tempStr,"VCALENDAR")==0 && objectLevel ==0){
                 //this is valid
@@ -139,12 +159,26 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
 
               }else{
                 //no valid transformation, print error
+                printf("mallformed begin tag, error\n");
+                deleteCalendar(tempCal);
+                (*obj)=NULL;
+                deleteEvent(tempEvent);
+                deleteAlarm(tempAlarm);
+
+                free(readLine);
+                fclose(fp);
+                return OTHER_ERROR;
               }
 
 
               objectLevel++;
             }else if(strcmp(tempStr,"END") == 0){
               tempStr = strtok(NULL,":");
+              if(tempStr == NULL){
+                printf("mallformed end\n");
+                //set temp to a bad string so it will reach proper error
+                tempStr = "";
+              }
                 switch (objectLevel) {
                   //calendar object should be ending
                   case 1:
@@ -152,7 +186,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
                       printf("1inv cal\n");
                       (*obj) = NULL;
                       deleteCalendar(tempCal);
-                      free(fileExtension);
+
                       free(readLine);
                       fclose(fp);
                     }
@@ -160,7 +194,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
                       printf("1inv cal\n");
                       (*obj) = NULL;
                       deleteCalendar(tempCal);
-                      free(fileExtension);
+
                       free(readLine);
                       fclose(fp);
                     }
@@ -172,7 +206,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
                       (*obj) = NULL;
                       deleteCalendar(tempCal);
                       deleteEvent(tempEvent);
-                      free(fileExtension);
+
                       free(readLine);
                       fclose(fp);
                       return INV_EVENT;
@@ -184,7 +218,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
                       (*obj) = NULL;
                       deleteCalendar(tempCal);
                       deleteEvent(tempEvent);
-                      free(fileExtension);
+
                       free(readLine);
                       fclose(fp);
                       return INV_EVENT;
@@ -199,7 +233,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
                       deleteCalendar(tempCal);
                       deleteEvent(tempEvent);
                       deleteAlarm(tempAlarm);
-                      free(fileExtension);
+
                       free(readLine);
                       fclose(fp);
                       return INV_ALARM;
@@ -210,14 +244,23 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
                       deleteCalendar(tempCal);
                       deleteEvent(tempEvent);
                       deleteAlarm(tempAlarm);
-                      free(fileExtension);
+
                       free(readLine);
                       fclose(fp);
                       return INV_ALARM;
                     }
                     insertBack(tempEvent->alarms,tempAlarm);
                   break;
+                  default:
+                  printf("mallformed end\n");
+                  deleteCalendar(tempCal);
+                  (*obj)=NULL;
+                  deleteEvent(tempEvent);
+                  deleteAlarm(tempAlarm);
 
+                  free(readLine);
+                  fclose(fp);
+                  return OTHER_ERROR;
                 }
 
 
@@ -238,7 +281,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
                     deleteCalendar(tempCal);
                     (*obj) = NULL;
 
-                    free(fileExtension);
+
                     free(readLine);
                     fclose(fp);
                     return DUP_VER;
@@ -249,7 +292,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
                     deleteCalendar(tempCal);
                     (*obj) = NULL;
 
-                    free(fileExtension);
+
                     free(readLine);
                     fclose(fp);
                     return INV_VER;
@@ -261,7 +304,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
                     printf("INVALUD VERSION\n");
                     deleteCalendar(tempCal);
                     (*obj) = NULL;
-                    free(fileExtension);
+
                     free(readLine);
                     fclose(fp);
                     return INV_VER;
@@ -274,7 +317,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
                     printf("DOOP prodid\n");
                     deleteCalendar(tempCal);
                     (*obj) = NULL;
-                    free(fileExtension);
+
                     free(readLine);
                     fclose(fp);
                     return DUP_PRODID;
@@ -285,7 +328,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
                   if(tempStr == NULL){
                     deleteCalendar(tempCal);
                     (*obj) = NULL;
-                    free(fileExtension);
+
                     free(readLine);
                     fclose(fp);
                     return INV_PRODID;
@@ -303,7 +346,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
                     printf("inv cal\n" );
                     (*obj) = NULL;
                     deleteCalendar(tempCal);
-                    free(fileExtension);
+
                     free(readLine);
                     fclose(fp);
                     return INV_CAL;
@@ -326,7 +369,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
                     (*obj) = NULL;
                     deleteCalendar(tempCal);
                     deleteEvent(tempEvent);
-                    free(fileExtension);
+
                     free(readLine);
                     fclose(fp);
                     return INV_EVENT;
@@ -342,7 +385,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
                   if(isValidDateTime(tempEvent->creationDateTime)==1){
                     deleteCalendar(tempCal);
                     (*obj) = NULL;
-                    free(fileExtension);
+
                     free(readLine);
                     //down two levels of abstractions so we delete these
 
@@ -359,7 +402,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
                     (*obj) = NULL;
                     deleteCalendar(tempCal);
                     deleteEvent(tempEvent);
-                    free(fileExtension);
+
                     free(readLine);
                     fclose(fp);
                     return INV_EVENT;
@@ -375,7 +418,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
                   if(isValidDateTime(tempEvent->startDateTime)==1){
                     deleteCalendar(tempCal);
                     (*obj) = NULL;
-                    free(fileExtension);
+
                     free(readLine);
                     //down two levels of abstractions so we delete these
                     deleteEvent(tempEvent);
@@ -389,7 +432,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
                     (*obj) = NULL;
                     deleteCalendar(tempCal);
                     deleteEvent(tempEvent);
-                    free(fileExtension);
+
                     free(readLine);
                     fclose(fp);
                     return INV_EVENT;
@@ -406,7 +449,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
                       (*obj) = NULL;
                       deleteCalendar(tempCal);
                       deleteAlarm(tempAlarm);
-                      free(fileExtension);
+
                       free(readLine);
                       fclose(fp);
                       return INV_ALARM;
@@ -420,7 +463,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
                       (*obj) = NULL;
                       deleteCalendar(tempCal);
                       deleteAlarm(tempAlarm);
-                      free(fileExtension);
+
                       free(readLine);
                       fclose(fp);
                       return INV_ALARM;
@@ -433,7 +476,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
 
                       deleteCalendar(tempCal);
                       (*obj) = NULL;
-                      free(fileExtension);
+
                       free(readLine);
                       //down two levels of abstractions so we delete these
                       deleteAlarm(tempAlarm);
@@ -480,6 +523,12 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
       if(strcmp(tempStr,"END")==0){
         tempStr = strtok(NULL,"");
 
+        if(tempStr == NULL){
+          printf("mallformed end\n");
+          //set temp to a bad string so it will reach proper error
+          tempStr = "";
+        }
+
         switch (objectLevel) {
           //calendar object should be ending
           case 1:
@@ -487,7 +536,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
               printf("1inv cal\n");
               (*obj) = NULL;
               deleteCalendar(tempCal);
-              free(fileExtension);
+
               free(readLine);
               fclose(fp);
               return INV_CAL;
@@ -496,7 +545,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
               printf("1inv cal\n");
               (*obj) = NULL;
               deleteCalendar(tempCal);
-              free(fileExtension);
+
               free(readLine);
               fclose(fp);
               return INV_CAL;
@@ -508,7 +557,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
               (*obj) = NULL;
               deleteCalendar(tempCal);
               deleteEvent(tempEvent);
-              free(fileExtension);
+
               free(readLine);
               fclose(fp);
               return INV_EVENT;
@@ -519,12 +568,11 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
               (*obj) = NULL;
               deleteCalendar(tempCal);
               deleteEvent(tempEvent);
-              free(fileExtension);
+
               free(readLine);
               fclose(fp);
               return INV_EVENT;
             }
-
           break;
           case 3:
             if((strcmp(tempStr,"VALARM")!=0)){
@@ -533,7 +581,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
               deleteCalendar(tempCal);
               deleteEvent(tempEvent);
               deleteAlarm(tempAlarm);
-              free(fileExtension);
+
               free(readLine);
               fclose(fp);
               return INV_ALARM;
@@ -544,13 +592,22 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
               deleteCalendar(tempCal);
               deleteEvent(tempEvent);
               deleteAlarm(tempAlarm);
-              free(fileExtension);
+
               free(readLine);
               fclose(fp);
               return INV_ALARM;
             }
-
           break;
+          default:
+          printf("mallformed end\n");
+          deleteCalendar(tempCal);
+          (*obj)=NULL;
+          deleteEvent(tempEvent);
+          deleteAlarm(tempAlarm);
+
+          free(readLine);
+          fclose(fp);
+          return OTHER_ERROR;
         }
         objectLevel--;
       }
@@ -561,16 +618,15 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
       printf("inv cal\n");
       (*obj) = NULL;
       deleteCalendar(tempCal);
-      free(fileExtension);
+
       free(readLine);
       fclose(fp);
       return INV_CAL;
     }
 
-
     *obj = tempCal;
 
-    free(fileExtension);
+
     free(readLine);
     fclose(fp);
 
