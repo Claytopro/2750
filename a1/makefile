@@ -1,32 +1,28 @@
 CC = gcc
-CPPFLAGS=
 CFLAGS = -Wall -std=c11 -g
-LDFLAGS= -L./bin/
+LDFLAGS = -L.
 BINDIR = ./bin/
-SRCDIR = ./src/
 
-all: test
+all: libcal.so liblist.so
+	$(CC) $(CFLAGS) -o test test.c -llist -lcal $(LDFLAGS)
 
-test: test.o libcal.so
-	$(CC) $(CFLAGS) -o test test.o -llist -lcal $(LDFLAGS)
-
-test.o: test.c
-	$(CC) $(CFLAGS) -c test.c
-
-libcal.so: CalendarParser.o liblist.so
-	$(CC) -shared -o $(BINDIR)libcal.so CalendarParser.o
+libcal.so: CalendarParser.o
+	$(CC) -shared -o libcal.so CalendarParser.o
 
 CalendarParser.o: CalendarParser.c CalendarParser.h
-	$(CC) $(CFLAGS) -c -fpic CalendarParser.c
+	$(CC) $(CLAGS) -c -fpic CalendarParser.c
+
+liblist.so: LinkedListAPI.o
+	$(CC) $(CFLAGS) -shared -o liblist.so LinkedListAPI.o
 
 LinkedListAPI.o: LinkedListAPI.c LinkedListAPI.h
 	$(CC) $(CFLAGS) -c -fpic LinkedListAPI.c
 
-liblist.so: LinkedListAPI.o
-	$(CC) -shared -o $(BINDIR)liblist.so LinkedListAPI.o
-
 clean:
-	rm -rf test *.o $(BINDIR)*.so
+	rm -rf test *.o *.so
+
+exPATH:
+	export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:."
 
 valgrind:
-	  valgrind --leak-check=full --track-origins=yes ./test
+	valgrind --leak-check=full --track-origins=yes ./test

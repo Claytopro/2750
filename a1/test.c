@@ -4,6 +4,7 @@
 **/
 
 #include "CalendarParser.c"
+#include "LinkedListAPI.c"
 
 
 
@@ -13,11 +14,8 @@ int main(){
 
 
   if(createCalendar("test.ics", &tester) != OK){
-    if(tester != NULL){
-      printf("calendar not set to null on erro\n");
-    }
-    printf("test:baddd\n");
-  //  deleteCalendar(tester);
+  printf("error:%s:\n",printError(createCalendar("test.ics", &tester)) );
+
   }else{
 
     if(tester != NULL){
