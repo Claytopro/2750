@@ -683,6 +683,16 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
       return INV_CAL;
     }
 
+    //check if tempCalendar is valid
+    if(strcmp(tempCal->prodID,"") == 0 ||
+    tempCal->version == 0.0 || getFromFront(tempCal->events)==NULL ){
+      deleteCalendar(tempCal);
+      (*obj) = NULL;
+      free(readLine);
+      fclose(fp);
+      return INV_CAL;
+    }
+
     *obj = tempCal;
 
 
