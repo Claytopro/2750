@@ -84,7 +84,18 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
     /*reads through each character in the file*/
     while(fgets(bufferLine, 80,fp)){
       lineLength = strlen(bufferLine);
-
+      //empty line is foudn and that is bad so we return error, INV_CAL
+      if(lineLength == 2){
+        if((bufferLine[0] == '\r') && (bufferLine[1] == '\n')){
+          (*obj) = NULL;
+          free(readLine);
+          deleteEvent(tempEvent);
+          deleteAlarm(tempAlarm);
+          deleteCalendar(tempCal);
+          fclose(fp);
+          return INV_CAL;
+        }
+      }
       //check for (CRLF) /r/n line ending
       if(bufferLine[lineLength-1] != '\n' || bufferLine[lineLength-2] != '\r'){
         ////printf("invalid line  :%s:\n",bufferLine);
@@ -785,46 +796,47 @@ char* printCalendar(const Calendar* obj){
  *@param err - an error code
 **/
 char* printError(ICalErrorCode err){
-  char* toRtrn;
+  char* toRtrn = malloc(sizeof(char)*100);
+
   switch(err){
     case OK:
-      toRtrn = "PROCEDURE WAS OK\n";
+      strcpy(toRtrn,"PROCEDURE WAS OK\n");
     break;
     case INV_FILE:
-      toRtrn = "INVALID FILE\n";
+      strcpy(toRtrn,"INVALID FILE\n");
     break;
     case INV_CAL:
-      toRtrn = "INVALID CALENDAR\n";
+      strcpy(toRtrn,"INVALID CALENDAR\n");
     break;
     case INV_VER:
-      toRtrn = "INVALID VERSION\n";
+      strcpy(toRtrn,"INVALID VERSION\n");
     break;
     case DUP_VER:
-      toRtrn = "DUPLICATE VERSION APPEARED\n";
+      strcpy(toRtrn, "DUPLICATE VERSION APPEARED\n");
     break;
     case INV_PRODID:
-      toRtrn = "INVALID PRODUCT ID\n";
+      strcpy(toRtrn,"INVALID PRODUCT ID\n");
     break;
     case DUP_PRODID:
-      toRtrn = "DUPULICATE PRODUCT ID\n";
+      strcpy(toRtrn,"DUPULICATE PRODUCT ID\n");
     break;
     case INV_EVENT:
-      toRtrn = "INVALID EVENT\n";
+      strcpy(toRtrn,"INVALID EVENT\n");
     break;
     case INV_DT:
-      toRtrn = "INVALID DATETIME\n";
+      strcpy(toRtrn,"INVALID DATETIME\n");
     break;
     case INV_ALARM:
-      toRtrn = "INVALID ALARM\n";
+      strcpy(toRtrn, "INVALID ALARM\n");
     break;
     case WRITE_ERROR:
-      toRtrn = "WRITE ERROR\n";
+      strcpy(toRtrn, "WRITE ERROR\n");
     break;
     case OTHER_ERROR:
-      toRtrn = "OTHER ERROR OCCURED\n";
+      strcpy(toRtrn,"OTHER ERROR OCCURED\n");
     break;
     default:
-      toRtrn = "UNKOWN ERROR OCCURED\n";
+      strcpy(toRtrn,"UNKOWN ERROR OCCURED\n");
   }
 
   return toRtrn;
