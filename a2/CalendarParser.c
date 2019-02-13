@@ -900,6 +900,7 @@ ICalErrorCode validateCalendar(const Calendar* obj){
   //check if all events are valid
   while ((elem = nextElement(&iter)) != NULL){
     Event* tempEvent = (Event*)elem;
+    if(tempEvent == NULL) return INV_CAL;
     if(strcmp(tempEvent->UID, "")==0) return INV_CAL;
     //check if dates are valid
     if(isValidDateTime(tempEvent->creationDateTime) ==1)return INV_CAL;
@@ -909,6 +910,7 @@ ICalErrorCode validateCalendar(const Calendar* obj){
     //check if all alarms are valid within an event
     while ((elemTwo = nextElement(&iterTwo))!=NULL){
       Alarm* tempAlarm = (Alarm*)elemTwo;
+      if(tempAlarm == NULL) return INV_CAL;
       if(strcmp(tempAlarm->action,"")==0)return INV_CAL;
       if(tempAlarm->trigger == NULL) return INV_CAL;
 
@@ -1328,6 +1330,8 @@ int isValidDateTime(DateTime obj){
 
 //checks if input propertie is valud
 int isValidProperty(Property *obj){
+  if(obj == NULL) return 0;
+  
   if(strcmp(obj->propName,"") == 0) return 0;
 
   if(strcmp(obj->propDescr,"")==0) return 0;
