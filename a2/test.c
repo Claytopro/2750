@@ -82,6 +82,7 @@ int main(){
       if(tester != NULL){
         calendarToPtr = printCalendar(tester);
         printf("%s\n",calendarToPtr);
+        printf("validate Calendar:%s\n", printError(validateCalendar(tester)));
 
         //change some shit and test validate
         if(validateCalendar(tester) == OK) printf("VALIDATE CALENDAR:ok\n");

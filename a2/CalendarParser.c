@@ -927,6 +927,7 @@ ICalErrorCode writeCalendar(char* fileName, const Calendar* obj){
   strcat(toRtrn,"END:VCALENDAR\r\n");
 
   fwrite(toRtrn,strlen(toRtrn)*sizeof(char),1,fp);
+
   free(toRtrn);
   fclose(fp);
   return OK;
@@ -956,7 +957,6 @@ ICalErrorCode validateCalendar(const Calendar* obj){
   //check if all events are valid
   while ((elem = nextElement(&iter)) != NULL){
     Event* tempEvent = (Event*)elem;
-    if(tempEvent == NULL) return INV_CAL;
     if(strcmp(tempEvent->UID, "")==0) return INV_EVENT;
     //check if dates are valid
     if(isValidDateTime(tempEvent->creationDateTime) ==1)return INV_EVENT;
@@ -968,7 +968,6 @@ ICalErrorCode validateCalendar(const Calendar* obj){
     //check if all alarms are valid within an event
     while ((elemTwo = nextElement(&iterTwo))!=NULL){
       Alarm* tempAlarm = (Alarm*)elemTwo;
-      if(tempAlarm == NULL) return INV_EVENT;
       if(strcmp(tempAlarm->action,"")==0)return INV_ALARM;
       //check trigger is not null and not blank
       if(tempAlarm->trigger == NULL) return INV_ALARM;
@@ -994,13 +993,13 @@ ICalErrorCode validateCalendar(const Calendar* obj){
     }
   }
 
+  //check if properties are valid and list does not contain NULL pointers.
+  //doesnt make sense that there could be null pointers but whatever
   iterThree = createIterator(obj->properties);
   while((elemThree = nextElement(&iterThree)) != NULL){
     Property* tempProp = (Property*)elemThree;
     if(isValidProperty(tempProp) == 0) return INV_CAL;
-
   }
-
 
   return OK;
 }
