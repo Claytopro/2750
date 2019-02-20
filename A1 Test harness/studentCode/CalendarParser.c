@@ -901,7 +901,7 @@ ICalErrorCode writeCalendar(char* fileName, const Calendar* obj){
   while ((elem = nextElement(&iter)) != NULL){
     Property* tempProp = (Property*)elem;
     temp = printProperty(tempProp);
-    strcat(temp,"\r\n");
+    strcat(temp,"\r\r\n");
     toRtrn = realloc(toRtrn, (strlen(toRtrn) + strlen(temp))+2);
     strcat(toRtrn,temp);
     free(temp);
@@ -911,7 +911,7 @@ ICalErrorCode writeCalendar(char* fileName, const Calendar* obj){
   while ((elem = nextElement(&iter)) != NULL){
     Event* tempEvent = (Event*)elem;
     temp = printEvent(tempEvent);
-    strcat(temp,"\r\n");
+    strcat(temp,"\r\r\n");
     toRtrn = realloc(toRtrn, (strlen(toRtrn) + strlen(temp))+2);
     strcat(toRtrn,temp);
     free(temp);
@@ -936,9 +936,6 @@ ICalErrorCode validateCalendar(const Calendar* obj){
   void* elem;
   void* elemTwo;
   void* elemThree;
-
-  if(obj == NULL) return INV_CAL;
-
   //ensure Calendar has UID, creation/start date
   if(strcmp(obj->prodID,"")== 0) return INV_CAL;
   if(obj->version <= 0) return INV_CAL;
@@ -949,37 +946,33 @@ ICalErrorCode validateCalendar(const Calendar* obj){
   while ((elem = nextElement(&iter)) != NULL){
     Event* tempEvent = (Event*)elem;
     if(tempEvent == NULL) return INV_CAL;
-    if(strcmp(tempEvent->UID, "")==0) return INV_EVENT;
+    if(strcmp(tempEvent->UID, "")==0) return INV_CAL;
     //check if dates are valid
-    if(isValidDateTime(tempEvent->creationDateTime) ==1)return INV_EVENT;
-    if(isValidDateTime(tempEvent->startDateTime)==1) return INV_EVENT;
-
-    if(tempEvent->alarms == NULL ) return INV_EVENT;
+    if(isValidDateTime(tempEvent->creationDateTime) ==1)return INV_CAL;
+    if(isValidDateTime(tempEvent->startDateTime)==1) return INV_CAL;
 
     iterTwo = createIterator(tempEvent->alarms);
     //check if all alarms are valid within an event
     while ((elemTwo = nextElement(&iterTwo))!=NULL){
       Alarm* tempAlarm = (Alarm*)elemTwo;
-      if(tempAlarm == NULL) return INV_EVENT;
-      if(strcmp(tempAlarm->action,"")==0)return INV_ALARM;
-      if(tempAlarm->trigger == NULL) return INV_ALARM;
+      if(tempAlarm == NULL) return INV_CAL;
+      if(strcmp(tempAlarm->action,"")==0)return INV_CAL;
+      if(tempAlarm->trigger == NULL) return INV_CAL;
 
       //check all properties are valid within alarm
       iterThree = createIterator(tempAlarm->properties);
       while((elemThree = nextElement(&iterThree)) != NULL){
         Property* tempProp = (Property*)elemThree;
-        if(isValidAlarmProperty(tempProp,tempAlarm) == 0) return INV_ALARM;
+        if(isValidProperty(tempProp) == 0) return INV_CAL;
 
       }
     }
-
-    if(tempEvent->properties == NULL ) return INV_EVENT;
 
     //check Event properties for validity
     iterThree = createIterator(tempEvent->properties);
     while((elemThree = nextElement(&iterThree)) != NULL){
       Property* tempProp = (Property*)elemThree;
-      if(isValidEventProperty(tempProp,tempEvent) == 0) return INV_CAL;
+      if(isValidProperty(tempProp) == 0) return INV_CAL;
     }
   }
 
@@ -1383,7 +1376,7 @@ int isValidDateTime(DateTime obj){
     return 0;
 }
 
-//checks if input propertie is valud for calendar properties
+//checks if input propertie is valud
 int isValidProperty(Property *obj){
   if(obj == NULL) return 0;
 
@@ -1394,171 +1387,3 @@ int isValidProperty(Property *obj){
   return 1;
 }
 
-//checks event properties
-int isValidEventProperty(Property *obj,Event *tempEvent){
-  char *propDes[100];
-  char *toCompare;
-  ListIterator iter;
-  void* elem;
-  int i,len;
-
-  if(obj == NULL) return 0;
-
-  if(strcmp(obj->propName,"") == 0) return 0;
-
-  if(strcmp(obj->propDescr,"")==0) return 0;
-
-  len = strlen(obj->propName);
-  toCompare = malloc(sizeof(char)*len+1);
-  strcpy(toCompare, obj->propName);
-  strUpper(toCompare);
-  // strlength = strlen(propDes);
-  // //convert to uppercase
-  // while(*propDes){
-  //   *propDes = toupper((unsigned char) *propDes);
-  //   propDes++;
-  // }
-
-    //add all valid property names to list
-    propDes[0] = "CLASS";
-
-    propDes[1] = "CREATED";
-
-    propDes[2] = "DESCRIPTION";
-
-    propDes[3] = "GEO";
-
-    propDes[4] = "LAST-MODIFIED";
-
-    propDes[5] = "LOCATION";
-
-    propDes[6] = "ORGANIZER";
-
-    propDes[7] = "PRIORITY";
-
-    propDes[8] = "SEQ";
-
-    propDes[9] = "STATUS";
-
-    propDes[10] = "SUMMARY";
-
-    propDes[11] = "TRANSP";
-
-    propDes[12] = "URL";
-
-    propDes[13] = "RECURID";
-
-    propDes[14] = "ATTACH";
-
-    propDes[15] = "ATTENDEE";
-
-    propDes[16] = "CATEGORIES";
-
-    propDes[17] = "COMMENT";
-
-    propDes[18] = "CONTACT";
-
-    propDes[19] = "EXDATE";
-
-    propDes[20] = "RSTATUS";
-
-    propDes[21] = "RELATED";
-
-    propDes[22] = "RESOURCES";
-
-    propDes[23] = "RDATE";
-
-    propDes[24] = "DTEND";
-
-    propDes[25] = "DURATION";
-
-    //check if event property has already occured once
-    iter = createIterator(tempEvent->properties);
-    while((elem = nextElement(&iter)) != NULL){
-      Property* tempProp = (Property*)elem;
-
-      //ignore when both are pointing to same object
-      if(obj != tempProp ){
-        if(strcmp(obj->propDescr,tempProp->propDescr) == 0
-        && strcmp(obj->propName,tempProp->propName) == 0){
-          // printf("des 1:%s:  2:%s:\n", obj->propDescr,tempProp->propDescr);
-          // printf("name 1:%s:  2:%s:\n", obj->propName,tempProp->propName);
-          free(toCompare);
-          return 0;
-        }
-      }
-
-    }
-
-    for(i=0;i<26;i++){
-      if(strcmp(toCompare,propDes[i])==0){
-        free(toCompare);
-        return 1;
-      }
-    }
-  free(toCompare);
-  return 0;
-}
-
-//sends string to all upper case for easier comparing
-void strUpper(char string[]){
-	int i = 0;
-
-	while (string[i] != '\0')
-	{
-    	if (string[i] >= 'a' && string[i] <= 'z') {
-        	string[i] = string[i] - 32;
-    	}
-      	i++;
-	}
-}
-
-int isValidAlarmProperty(Property *obj,Alarm *tempAlarm){
-  char *toCompare;
-  char *propDes[100];
-  int i;
-  ListIterator iter;
-  void* elem;
-
-  if(obj == NULL) return 0;
-
-  if(strcmp(obj->propName,"") == 0) return 0;
-
-  if(strcmp(obj->propDescr,"")==0) return 0;
-  toCompare = malloc(sizeof(char)*strlen(obj->propName)+1);
-  strcpy(toCompare, obj->propName);
-  strUpper(toCompare);
-
-  propDes[0] = "DURATION";
-  propDes[1] = "REPEAT";
-  propDes[2] = "ATTACH";
-
-
-  //checks for repeat properties
-  iter = createIterator(tempAlarm->properties);
-  while((elem = nextElement(&iter)) != NULL){
-    Property* tempProp = (Property*)elem;
-
-    //ignore when both are pointing to same object
-    if(obj != tempProp ){
-      if(strcmp(obj->propDescr,tempProp->propDescr) == 0
-      && strcmp(obj->propName,tempProp->propName) == 0){
-        // printf("des 1:%s:  2:%s:\n", obj->propDescr,tempProp->propDescr);
-        // printf("name 1:%s:  2:%s:\n", obj->propName,tempProp->propName);
-        free(toCompare);
-        return 0;
-      }
-    }
-  }
-
-  for(i =0;i<3;i++){
-    if(strcmp(toCompare,propDes[i])==0){
-      free(toCompare);
-      return 1;
-    }
-  }
-
-
-  free(toCompare);
-  return 1;
-}

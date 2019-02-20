@@ -57,6 +57,14 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
     tempCal->properties = initializeList(&printProperty,&deleteProperty,&compareProperties);
     tempCal->events = initializeList(&printEvent,&deleteEvent,&compareEvents);
     /*open file for reading*/
+    if(fileName == NULL){
+      //deleteCalendar(tempCal);
+      (*obj) = NULL;
+      free(fileExtension);
+      free(readLine);
+      return INV_FILE;
+    }
+
     fp = fopen(fileName, "r+");
 
     //test for extension matching .ics and if file exists
@@ -68,7 +76,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
       /* TODO:Change TO ERROR CODE */
       deleteCalendar(tempCal);
       (*obj) = NULL;
-      printf("ERROR, COUND NOT OPEN FILE \n");
+      //printf("ERROR, COUND NOT OPEN FILE \n");
       free(fileExtension);
       free(readLine);
       if(fp != NULL){
@@ -84,10 +92,21 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
     /*reads through each character in the file*/
     while(fgets(bufferLine, 80,fp)){
       lineLength = strlen(bufferLine);
-
+      //empty line is foudn and that is bad so we return error, INV_CAL
+      if(lineLength == 2){
+        if((bufferLine[0] == '\r') && (bufferLine[1] == '\n')){
+          (*obj) = NULL;
+          free(readLine);
+          deleteEvent(tempEvent);
+          deleteAlarm(tempAlarm);
+          deleteCalendar(tempCal);
+          fclose(fp);
+          return INV_CAL;
+        }
+      }
       //check for (CRLF) /r/n line ending
       if(bufferLine[lineLength-1] != '\n' || bufferLine[lineLength-2] != '\r'){
-        printf("invalid line  :%s:\n",bufferLine);
+        ////printf("invalid line  :%s:\n",bufferLine);
         //add freeing shit here
         (*obj) = NULL;
         free(readLine);
@@ -117,19 +136,83 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
           //now readLine is the full line! greeat
           //this is working :
 
-          //printf("line is \"%s\"\n",readLine );
+          ////printf("line is \"%s\"\n",readLine );
 
-          tempStr = strtok(readLine,":;");
-          //printf("%s\n",tempStr);
+          if(readLine[0] == ':'){
+            tempStr = "";
+          }else{
 
-          if(tempStr != NULL){
+            tempStr = strtok(readLine,":;");
+            //printf("str = :%s:\n",tempStr);
+            if(tempStr == NULL){
+              tempStr = "";
+            }
+          }
+
+
 
             if(strcmp(tempStr,"BEGIN") == 0){
               //used to change what kind of struct is being created
               //cal (1), event(2), Alarma(3)
               tempStr = strtok(NULL,":");
+
               if(tempStr == NULL){
-                printf("mallformed end\n");
+                tempStr = "";
+              }
+              switch (objectLevel) {
+                //shoudlnt ever really happen unless starting by decalring events or alrams
+                //and that would result in
+                case 0:
+                if(strcmp(tempStr,"VCALENDAR")!=0){
+                  ////printf("1inv cal\n");
+                  (*obj) = NULL;
+                  deleteCalendar(tempCal);
+
+                  free(readLine);
+                  fclose(fp);
+                  return INV_CAL;
+                }
+                break;
+                case 1:
+                if(strcmp(tempStr,"VEVENT")!=0){
+                  ////printf("inv event\n" );
+                  (*obj) = NULL;
+                  deleteCalendar(tempCal);
+                  deleteEvent(tempEvent);
+
+                  free(readLine);
+                  fclose(fp);
+                  return INV_EVENT;
+                }else{
+                  //valid transformation
+                  tempEvent = calloc(1,sizeof(Event));
+
+                  tempEvent->properties = initializeList(&printProperty,&deleteProperty,&compareProperties);
+                  tempEvent->alarms = initializeList(&printAlarm,&deleteAlarm,&compareAlarms);
+
+                }
+
+                break;
+                case 2:
+                if((strcmp(tempStr,"VALARM")!=0)){
+                  ////printf("INV ALARM\n" );
+                  (*obj) = NULL;
+                  deleteCalendar(tempCal);
+                  deleteEvent(tempEvent);
+                  deleteAlarm(tempAlarm);
+
+                  free(readLine);
+                  fclose(fp);
+                  return INV_ALARM;
+                }else{
+                  //this is valid
+                  tempAlarm = calloc(1,sizeof(Alarm));
+                  tempAlarm->properties = initializeList(&printProperty,&deleteProperty,&compareProperties);
+
+                }
+                break;
+                default:
+                //printf("mallformed end\n");
                 deleteCalendar(tempCal);
                 (*obj)=NULL;
                 deleteEvent(tempEvent);
@@ -138,8 +221,11 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
                 free(readLine);
                 fclose(fp);
                 return OTHER_ERROR;
+
+
               }
 
+              /*
               if(strcmp(tempStr,"VCALENDAR")==0 && objectLevel ==0){
                 //this is valid
               }else if(strcmp(tempStr,"VEVENT")==0 && objectLevel ==1){
@@ -158,7 +244,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
 
               }else{
                 //no valid transformation, print error
-                printf("mallformed begin tag, error\n");
+                //printf("mallformed begin tag, error\n");
                 deleteCalendar(tempCal);
                 (*obj)=NULL;
                 deleteEvent(tempEvent);
@@ -168,13 +254,13 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
                 fclose(fp);
                 return OTHER_ERROR;
               }
-
+              */
 
               objectLevel++;
             }else if(strcmp(tempStr,"END") == 0){
               tempStr = strtok(NULL,":");
               if(tempStr == NULL){
-                printf("mallformed end\n");
+                //printf("mallformed end\n");
                 //set temp to a bad string so it will reach proper error
                 tempStr = "";
               }
@@ -182,15 +268,16 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
                   //calendar object should be ending
                   case 1:
                     if(strcmp(tempStr,"VCALENDAR")!=0){
-                      printf("1inv cal\n");
+                      //printf("1inv cal\n");
                       (*obj) = NULL;
                       deleteCalendar(tempCal);
 
                       free(readLine);
                       fclose(fp);
+                      return INV_CAL;
                     }
                     if(tempCal->version == 0.00 || strcmp(tempCal->prodID,"")==0){
-                      printf("1inv cal\n");
+                      //printf("1inv cal\n");
                       (*obj) = NULL;
                       deleteCalendar(tempCal);
 
@@ -201,7 +288,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
                   case 2:
                     //if VEVENT HASNT BEEN CLOSED we error;
                     if(strcmp(tempStr,"VEVENT")!=0){
-                      printf("inv event\n" );
+                      //printf("inv event\n" );
                       (*obj) = NULL;
                       deleteCalendar(tempCal);
                       deleteEvent(tempEvent);
@@ -213,7 +300,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
 
                     if(strcmp(tempEvent->UID,"")==0 || isValidDateTime(tempEvent->creationDateTime) == 1 ||
                   isValidDateTime(tempEvent->startDateTime)== 1){
-                      printf("inv event\n" );
+                      //printf("inv event\n" );
                       (*obj) = NULL;
                       deleteCalendar(tempCal);
                       deleteEvent(tempEvent);
@@ -227,7 +314,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
                   break;
                   case 3:
                     if((strcmp(tempStr,"VALARM")!=0)){
-                      printf("INV ALARM\n" );
+                      //printf("INV ALARM\n" );
                       (*obj) = NULL;
                       deleteCalendar(tempCal);
                       deleteEvent(tempEvent);
@@ -238,7 +325,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
                       return INV_ALARM;
                     }
                     if(tempAlarm->trigger == NULL || strcmp(tempAlarm->action, "") == 0){
-                      printf("INV ALARM\n" );
+                      //printf("INV ALARM\n" );
                       (*obj) = NULL;
                       deleteCalendar(tempCal);
                       deleteEvent(tempEvent);
@@ -251,7 +338,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
                     insertBack(tempEvent->alarms,tempAlarm);
                   break;
                   default:
-                  printf("mallformed end\n");
+                  //printf("mallformed end\n");
                   deleteCalendar(tempCal);
                   (*obj)=NULL;
                   deleteEvent(tempEvent);
@@ -276,7 +363,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
 
                   //if version already exists
                   if( tempCal->version != 0.0000){
-                    printf("doop version\n");
+                    //printf("doop version\n");
                     deleteCalendar(tempCal);
                     (*obj) = NULL;
 
@@ -287,7 +374,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
                   }
 
                   if(tempStr == NULL){
-                    printf("INVALUD VERSION\n");
+                    //printf("INVALUD VERSION\n");
                     deleteCalendar(tempCal);
                     (*obj) = NULL;
 
@@ -300,7 +387,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
                   tempCal->version = atof(tempStr);
 
                   if(tempCal->version == 0.0){
-                    printf("INVALUD VERSION\n");
+                    //printf("INVALUD VERSION\n");
                     deleteCalendar(tempCal);
                     (*obj) = NULL;
 
@@ -313,7 +400,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
                 } else if(strcmp(tempStr,"PRODID") == 0){
                   //if PRODID already Exists so we return Error Code
                   if(strcmp(tempCal->prodID,"") != 0){
-                    printf("DOOP prodid\n");
+                    //printf("DOOP prodid\n");
                     deleteCalendar(tempCal);
                     (*obj) = NULL;
 
@@ -335,14 +422,14 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
 
                   strcpy(tempCal->prodID,tempStr);
                   //TODO: remove this print
-                  //printf("proid is %s\n",tempCal->prodID);
+                  ////printf("proid is %s\n",tempCal->prodID);
                   break;
                 }else{
 
                   //create a property and add it to the propertie list in Caledar object
 
                   if(addProperty(tempStr,&tempCal) == INV_CAL){
-                    printf("inv cal\n" );
+                    //printf("inv cal\n" );
                     (*obj) = NULL;
                     deleteCalendar(tempCal);
 
@@ -364,7 +451,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
                 }else if(strcmp(tempStr,"DTSTAMP") == 0){
                   tempStr = strtok(NULL,"");
                   if(tempStr == NULL){
-                    printf("inv event\n" );
+                    //printf("inv event\n" );
                     (*obj) = NULL;
                     deleteCalendar(tempCal);
                     deleteEvent(tempEvent);
@@ -397,7 +484,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
                 }else if(strcmp(tempStr,"DTSTART") == 0){
                   tempStr = strtok(NULL,"");
                   if(tempStr == NULL){
-                    printf("inv event\n" );
+                    //printf("inv event\n" );
                     (*obj) = NULL;
                     deleteCalendar(tempCal);
                     deleteEvent(tempEvent);
@@ -426,8 +513,9 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
                   }
 
                 }else{
+
                   if(addPropertyEvent(tempStr,&tempEvent)==INV_EVENT ){
-                    printf("inv event\n" );
+                  
                     (*obj) = NULL;
                     deleteCalendar(tempCal);
                     deleteEvent(tempEvent);
@@ -444,7 +532,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
                   if(strcmp(tempStr,"ACTION") == 0){
                     tempStr = strtok(NULL,"");
                     if(tempStr == NULL){
-                      printf("INV ALARM\n" );
+                      //printf("INV ALARM\n" );
                       (*obj) = NULL;
                       deleteCalendar(tempCal);
                       deleteAlarm(tempAlarm);
@@ -458,7 +546,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
                   }else if(strcmp(tempStr,"TRIGGER") == 0){
                     tempStr = strtok(NULL,":");
                     if(tempStr == NULL){
-                      printf("INV ALARM\n" );
+                      //printf("INV ALARM\n" );
                       (*obj) = NULL;
                       deleteCalendar(tempCal);
                       deleteAlarm(tempAlarm);
@@ -489,14 +577,11 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
                 break;
                 //error has occurred
                 // default:
-                // printf("ERROR ICALENDAR OBJECT BEGAN INCORRECT\n");
+                // //printf("ERROR ICALENDAR OBJECT BEGAN INCORRECT\n");
               }
 
             }
 
-
-
-          }
 
           //resets readLine and copies next line to it. as well resets factor for reallocing readLine
           //makes it so last line is not processed in loop and is delt with afterwards
@@ -515,7 +600,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
 
     */
     if(readLine[0] != ';'){
-      //printf("last line is \"%s\"\n",readLine);
+      ////printf("last line is \"%s\"\n",readLine);
       tempStr = strtok(readLine,":;");
 
       //check if last line is
@@ -523,7 +608,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
         tempStr = strtok(NULL,"");
 
         if(tempStr == NULL){
-          printf("mallformed end\n");
+          //printf("mallformed end\n");
           //set temp to a bad string so it will reach proper error
           tempStr = "";
         }
@@ -532,7 +617,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
           //calendar object should be ending
           case 1:
             if(strcmp(tempStr,"VCALENDAR")!=0){
-              printf("1inv cal\n");
+              //printf("1inv cal\n");
               (*obj) = NULL;
               deleteCalendar(tempCal);
 
@@ -541,7 +626,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
               return INV_CAL;
             }
             if(tempCal->version == 0.00 || strcmp(tempCal->prodID,"")==0){
-              printf("1inv cal\n");
+              //printf("1inv cal\n");
               (*obj) = NULL;
               deleteCalendar(tempCal);
 
@@ -552,7 +637,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
           break;
           case 2:
             if(strcmp(tempStr,"VEVENT")!=0){
-              printf("inv event\n" );
+              //printf("inv event\n" );
               (*obj) = NULL;
               deleteCalendar(tempCal);
               deleteEvent(tempEvent);
@@ -563,7 +648,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
             }
             if(strcmp(tempEvent->UID,"")==0 || isValidDateTime(tempEvent->creationDateTime) == 1 ||
           isValidDateTime(tempEvent->startDateTime)== 1){
-              printf("inv event\n" );
+              //printf("inv event\n" );
               (*obj) = NULL;
               deleteCalendar(tempCal);
               deleteEvent(tempEvent);
@@ -575,7 +660,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
           break;
           case 3:
             if((strcmp(tempStr,"VALARM")!=0)){
-              printf("INV ALARM\n" );
+              //printf("INV ALARM\n" );
               (*obj) = NULL;
               deleteCalendar(tempCal);
               deleteEvent(tempEvent);
@@ -586,7 +671,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
               return INV_ALARM;
             }
             if(tempAlarm->trigger == NULL || strcmp(tempAlarm->action, "") == 0){
-              printf("INV ALARM\n" );
+              //printf("INV ALARM\n" );
               (*obj) = NULL;
               deleteCalendar(tempCal);
               deleteEvent(tempEvent);
@@ -598,7 +683,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
             }
           break;
           default:
-          printf("mallformed end\n");
+          //printf("mallformed end\n");
           deleteCalendar(tempCal);
           (*obj)=NULL;
           deleteEvent(tempEvent);
@@ -614,10 +699,20 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
 
     //object level should always be 0 at end of program
     if(objectLevel !=0){
-      printf("inv cal\n");
+      //printf("inv cal\n");
       (*obj) = NULL;
       deleteCalendar(tempCal);
 
+      free(readLine);
+      fclose(fp);
+      return INV_CAL;
+    }
+
+    //check if tempCalendar is valid
+    if(strcmp(tempCal->prodID,"") == 0 ||
+    tempCal->version == 0.0 || getFromFront(tempCal->events)==NULL ){
+      deleteCalendar(tempCal);
+      (*obj) = NULL;
       free(readLine);
       fclose(fp);
       return INV_CAL;
@@ -664,6 +759,8 @@ char* printCalendar(const Calendar* obj){
   char *temp;
   void* elem;
   ListIterator iter;
+
+  if(obj == NULL) return NULL;
 
 
 //  initilizes values to 0, unlike malloc.
@@ -715,8 +812,50 @@ char* printCalendar(const Calendar* obj){
  *@param err - an error code
 **/
 char* printError(ICalErrorCode err){
+  char* toRtrn = malloc(sizeof(char)*100);
 
-  return NULL;
+  switch(err){
+    case OK:
+      strcpy(toRtrn,"PROCEDURE WAS OK\n");
+    break;
+    case INV_FILE:
+      strcpy(toRtrn,"INVALID FILE\n");
+    break;
+    case INV_CAL:
+      strcpy(toRtrn,"INVALID CALENDAR\n");
+    break;
+    case INV_VER:
+      strcpy(toRtrn,"INVALID VERSION\n");
+    break;
+    case DUP_VER:
+      strcpy(toRtrn, "DUPLICATE VERSION APPEARED\n");
+    break;
+    case INV_PRODID:
+      strcpy(toRtrn,"INVALID PRODUCT ID\n");
+    break;
+    case DUP_PRODID:
+      strcpy(toRtrn,"DUPULICATE PRODUCT ID\n");
+    break;
+    case INV_EVENT:
+      strcpy(toRtrn,"INVALID EVENT\n");
+    break;
+    case INV_DT:
+      strcpy(toRtrn,"INVALID DATETIME\n");
+    break;
+    case INV_ALARM:
+      strcpy(toRtrn, "INVALID ALARM\n");
+    break;
+    case WRITE_ERROR:
+      strcpy(toRtrn, "WRITE ERROR\n");
+    break;
+    case OTHER_ERROR:
+      strcpy(toRtrn,"OTHER ERROR OCCURED\n");
+    break;
+    default:
+      strcpy(toRtrn,"UNKOWN ERROR OCCURED\n");
+  }
+
+  return toRtrn;
 
 }
 
@@ -767,6 +906,20 @@ void deleteEvent(void* toBeDeleted){
 
 
 int compareEvents(const void* first, const void* second){
+  Event* tmpEvent1;
+  Event* tmpEvent2;
+
+  if (first == NULL || second == NULL){
+    return 0;
+  }
+
+  tmpEvent2 = (Event*)second;
+  tmpEvent1 = (Event*)first;
+
+  if(strcmp(tmpEvent1->UID,tmpEvent2->UID) == 0){
+    return 1;
+  }
+
 
   return 0;
 }
@@ -857,6 +1010,19 @@ void deleteAlarm(void* toBeDeleted){
 }
 
 int compareAlarms(const void* first, const void* second){
+  Alarm* tmpAlarm1;
+  Alarm* tmpAlarm2;
+
+  if (first == NULL || second == NULL){
+		return 0;
+	}
+
+  tmpAlarm2 = (Alarm*)second;
+  tmpAlarm1 = (Alarm*)first;
+
+  if(strcmp(tmpAlarm1->action,tmpAlarm2->action) == 0 &&strcmp(tmpAlarm1->trigger,tmpAlarm2->trigger) == 0 ){
+    return 1;
+  }
 
   return 0;
 }
@@ -888,9 +1054,7 @@ char* printAlarm(void* toBePrinted){
   strcat(toRtrn,temp);
 
   //Create an iterator the iterator is allocated on the stack
-  if(tempAlarm->properties == NULL){
-    printf("tester\n");
-  }
+
 
 	iter = createIterator(tempAlarm->properties);
   //free temp because we're adding the string created by printProperty now
@@ -958,10 +1122,31 @@ char* printProperty(void* toBePrinted){
 }
 
 void deleteDate(void* toBeDeleted){
+  DateTime *tempDate;
 
+  if (toBeDeleted == NULL){
+    return;
+  }
+  tempDate = (DateTime*)toBeDeleted;
+
+  free(tempDate);
 }
 
 int compareDates(const void* first, const void* second){
+  DateTime* tmpDate1;
+  DateTime* tmpDate2;
+
+  if (first == NULL || second == NULL){
+		return 0;
+	}
+
+  tmpDate2 = (DateTime*)second;
+  tmpDate1 = (DateTime*)first;
+
+  if(strcmp(tmpDate1->date,tmpDate2->date)==0 && strcmp(tmpDate1->time,tmpDate2->time)==0){
+    return 1;
+  }
+
 
   return 0;
 }
@@ -985,20 +1170,26 @@ char* printDate(void* toBePrinted){
 
 
 ICalErrorCode addProperty(char *property, Calendar** obj){
+    //name will be set to "" in beginning of dealing with line
+    if(strcmp(property,"")==0){
+      return INV_CAL;
+    }
+
     Property *newProperty = malloc(sizeof(Property));
     //char *tmp;
     strcpy(newProperty->propName,property);
     property = strtok(NULL,"");
-    //realloc to account for size of description becuase of dynamic array in Property struct
-    newProperty = realloc(newProperty,(sizeof(Property) + sizeof(char)*strlen(property)+1));
-    strcpy(newProperty->propDescr,property);
 
     if(property == NULL){
       deleteProperty(newProperty);
       return INV_CAL;
     }
+    //realloc to account for size of description becuase of dynamic array in Property struct
+    newProperty = realloc(newProperty,(sizeof(Property) + sizeof(char)*strlen(property)+1));
+    strcpy(newProperty->propDescr,property);
+
     // tmp = printProperty(newProperty);
-    // //printf("property to create: %s\n",tmp);
+    // ////printf("property to create: %s\n",tmp);
     // free(tmp);
 
     insertFront((*obj)->properties,newProperty);
@@ -1007,24 +1198,23 @@ ICalErrorCode addProperty(char *property, Calendar** obj){
 }
 
 ICalErrorCode addPropertyEvent(char *property, Event** obj){
+  if(strcmp(property,"")==0){
+    return INV_EVENT;
+  }
   Property *newProperty = malloc(sizeof(Property));
   //  char *tmp;
   strcpy(newProperty->propName,property);
 
   //will turn the rest of the tokenized thing into the description of property
   property = strtok(NULL,"");
-  //realloc to account for size of description becuase of dynamic array in Property struct
-  newProperty = realloc(newProperty,(sizeof(Property) + sizeof(char)*strlen(property)+1));
-  strcpy(newProperty->propDescr,property);
-
 
   if(property == NULL){
     deleteProperty(newProperty);
     return INV_EVENT;
   }
-  // tmp = printProperty(newProperty);
-  // //printf("Event property to create:%s!\n",tmp);
-  // free(tmp);
+  //realloc to account for size of description becuase of dynamic array in Property struct
+  newProperty = realloc(newProperty,(sizeof(Property) + sizeof(char)*strlen(property)+1));
+  strcpy(newProperty->propDescr,property);
 
   insertFront((*obj)->properties,newProperty);
 
@@ -1032,6 +1222,10 @@ ICalErrorCode addPropertyEvent(char *property, Event** obj){
 }
 
 ICalErrorCode addPropertyAlarm(char *property, Alarm** obj){
+  if(strcmp(property,"")==0){
+    return INV_ALARM;
+  }
+
   Property *newProperty = malloc(sizeof(Property));
   strcpy(newProperty->propName,property);
   property = strtok(NULL,"");
@@ -1045,11 +1239,6 @@ ICalErrorCode addPropertyAlarm(char *property, Alarm** obj){
   //realloc to account for size of description becuase of dynamic array in Property struct
   newProperty = realloc(newProperty,(sizeof(Property) + sizeof(char)*strlen(property)+1));
   strcpy(newProperty->propDescr,property);
-
-  // char *tmp;
-  // tmp = printProperty(newProperty);
-  // printf("Alarm property to create: %s\n",tmp);
-  // free(tmp);
 
   insertFront((*obj)->properties,newProperty);
 

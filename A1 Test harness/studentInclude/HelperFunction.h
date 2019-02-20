@@ -22,13 +22,8 @@ ICalErrorCode addPropertyAlarm(char *property, Alarm** obj);
 char dateBoolToChar(int z);
 /*check if DateTime String is valid */
 int isValidDateTime(DateTime obj);
-//check if input property is valid Calendar property
+//check if input property follows standard
 int isValidProperty(Property *obj);
-//check if valid Event Property;
-int isValidEventProperty(Property *obj,Event *tempEvent);
-
-int isValidAlarmProperty(Property *obj,Alarm *tempAlarm);
-//sets to upper case
-void strUpper(char string[]);
 
 #endif
+

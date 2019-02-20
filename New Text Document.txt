@@ -1,25 +1,126 @@
-CC = gcc
-CFLAGS = -Wall -std=c11 -g
-LDFLAGS = -L.
-BINDIR = ./bin/
+/** Function to writing a Calendar object into a file in iCalendar format.
+ *@pre Calendar object exists, is not null, and is valid
+ *@post Calendar has not been modified in any way, and a file representing the
+        Calendar contents in iCalendar format has been created
+ *@return the error code indicating success or the error encountered when parsing the calendar
+ *@param obj - a pointer to a Calendar struct
+ **/
+ICalErrorCode writeCalendar(char* fileName, const Calendar* obj){
+  FILE *fp;
+  char *toRtrn;
+  char *temp;
+  void* elem;
+  ListIterator iter;
 
-all: libcal.so liblist.so
-	$(CC) $(CFLAGS) -o test test.c -llist -lcal $(LDFLAGS)
+  fp = fopen(fileName,"w+");
+  if(fp == NULL){
+    return INV_FILE;
+  }
 
-libcal.so: CalendarParser.o
-	$(CC) -shared -o $libcal.so CalendarParser.o
+  //  initilizes values to 0, unlike malloc.
+  toRtrn = calloc(100,sizeof(char));
+  temp = calloc(100,sizeof(char));
 
-CalendarParser.o: CalendarParser.c CalendarParser.h
-	$(CC) $(CLAGS) -c -fpic CalendarParser.c
+  strcpy(toRtrn,"BEGIN:VCALENDAR\r\n");
+  sprintf(temp,"VERSION:%.2f\r\n",obj->version);
+  //+14 to not get valgrind errors, unsure why must ask TA, its because sizeof() returns 8
+  toRtrn = realloc(toRtrn, (strlen(toRtrn) + strlen(temp))+2);
+  strcat(toRtrn,temp);
 
-liblist.so: LinkedListAPI.o
-	$(CC) $(CFLAGS) -shared -o liblist.so LinkedListAPI.o
+  sprintf(temp,"PRODID:%s\r\n",obj->prodID);
+  toRtrn = realloc(toRtrn, (strlen(toRtrn) + strlen(temp))+2);
+  strcat(toRtrn,temp);
 
-LinkedListAPI.o: LinkedListAPI.c LinkedListAPI.h
-	$(CC) $(CFLAGS) -c -fpic LinkedListAPI.c
+  //Create an iterator the iterator is allocated on the stack
+  iter = createIterator(obj->properties);
+  //free temp because we're adding the string created by printProperty now
+  free(temp);
 
-clean:
-	rm -rf test *.o $(BINDIR)*.so
+  while ((elem = nextElement(&iter)) != NULL){
+    Property* tempProp = (Property*)elem;
+    temp = printProperty(tempProp);
+    strcat(temp,"\r\n");
+    toRtrn = realloc(toRtrn, (strlen(toRtrn) + strlen(temp))+2);
+    strcat(toRtrn,temp);
+    free(temp);
+  }
 
-valgrind:
-	  valgrind --leak-check=full --track-origins=yes ./test
+  iter = createIterator(obj->events);
+  while ((elem = nextElement(&iter)) != NULL){
+    Event* tempEvent = (Event*)elem;
+    temp = printEvent(tempEvent);
+    strcat(temp,"\r\n");
+    toRtrn = realloc(toRtrn, (strlen(toRtrn) + strlen(temp))+2);
+    strcat(toRtrn,temp);
+    free(temp);
+  }
+  toRtrn = realloc(toRtrn, (strlen(toRtrn) +16));
+  strcat(toRtrn,"END:VCALENDAR\r\n");
+
+  fwrite(toRtrn,strlen(toRtrn)*sizeof(char),1,fp);
+  free(toRtrn);
+  fclose(fp);
+  return OK;
+}
+
+/** Function to validating an existing a Calendar object
+ *@pre Calendar object exists and is not null
+ *@post Calendar has not been modified in any way
+ *@return the error code indicating success or the error encountered when validating the calendar
+ *@param obj - a pointer to a Calendar struct
+ **/
+ICalErrorCode validateCalendar(const Calendar* obj){
+  ListIterator iter,iterTwo,iterThree;
+  void* elem;
+  void* elemTwo;
+  void* elemThree;
+  //ensure Calendar has UID, creation/start date
+  if(strcmp(obj->prodID,"")== 0) return INV_CAL;
+  if(obj->version <= 0) return INV_CAL;
+  if(getFromFront(obj->events) == NULL) return INV_CAL;
+
+  iter = createIterator(obj->events);
+  //check if all events are valid
+  while ((elem = nextElement(&iter)) != NULL){
+    Event* tempEvent = (Event*)elem;
+    if(tempEvent == NULL) return INV_CAL;
+    if(strcmp(tempEvent->UID, "")==0) return INV_CAL;
+    //check if dates are valid
+    if(isValidDateTime(tempEvent->creationDateTime) ==1)return INV_CAL;
+    if(isValidDateTime(tempEvent->startDateTime)==1) return INV_CAL;
+
+    iterTwo = createIterator(tempEvent->alarms);
+    //check if all alarms are valid within an event
+    while ((elemTwo = nextElement(&iterTwo))!=NULL){
+      Alarm* tempAlarm = (Alarm*)elemTwo;
+      if(tempAlarm == NULL) return INV_CAL;
+      if(strcmp(tempAlarm->action,"")==0)return INV_CAL;
+      if(tempAlarm->trigger == NULL) return INV_CAL;
+
+      //check all properties are valid within alarm
+      iterThree = createIterator(tempAlarm->properties);
+      while((elemThree = nextElement(&iterThree)) != NULL){
+        Property* tempProp = (Property*)elemThree;
+        if(isValidProperty(tempProp) == 0) return INV_CAL;
+
+      }
+    }
+
+    //check Event properties for validity
+    iterThree = createIterator(tempEvent->properties);
+    while((elemThree = nextElement(&iterThree)) != NULL){
+      Property* tempProp = (Property*)elemThree;
+      if(isValidProperty(tempProp) == 0) return INV_CAL;
+    }
+  }
+
+  iterThree = createIterator(obj->properties);
+  while((elemThree = nextElement(&iterThree)) != NULL){
+    Property* tempProp = (Property*)elemThree;
+    if(isValidProperty(tempProp) == 0) return INV_CAL;
+
+  }
+
+
+  return OK;
+}
