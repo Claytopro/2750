@@ -356,7 +356,6 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
 
                 //used when adding to calendar struct
                 case 1:
-
                 if(strcmp(tempStr,"VERSION") == 0){
                   //moves to next part of string which should be version number
                   tempStr = strtok(NULL,"");
@@ -366,8 +365,6 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
                     //printf("doop version\r\n");
                     deleteCalendar(tempCal);
                     (*obj) = NULL;
-
-
                     free(readLine);
                     fclose(fp);
                     return DUP_VER;
@@ -377,8 +374,6 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
                     //printf("INVALUD VERSION\r\n");
                     deleteCalendar(tempCal);
                     (*obj) = NULL;
-
-
                     free(readLine);
                     fclose(fp);
                     return INV_VER;
@@ -390,20 +385,17 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
                     //printf("INVALUD VERSION\r\n");
                     deleteCalendar(tempCal);
                     (*obj) = NULL;
-
                     free(readLine);
                     fclose(fp);
                     return INV_VER;
                   }
                   break;
-
                 } else if(strcmp(tempStr,"PRODID") == 0){
                   //if PRODID already Exists so we return Error Code
                   if(strcmp(tempCal->prodID,"") != 0){
                     //printf("DOOP prodid\r\n");
                     deleteCalendar(tempCal);
                     (*obj) = NULL;
-
                     free(readLine);
                     fclose(fp);
                     return DUP_PRODID;
@@ -414,7 +406,6 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
                   if(tempStr == NULL){
                     deleteCalendar(tempCal);
                     (*obj) = NULL;
-
                     free(readLine);
                     fclose(fp);
                     return INV_PRODID;
@@ -425,33 +416,56 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
                   ////printf("proid is %s\r\n",tempCal->prodID);
                   break;
                 }else{
-
                   //create a property and add it to the propertie list in Caledar object
-
                   if(addProperty(tempStr,&tempCal) == INV_CAL){
                     //printf("inv cal\r\n" );
                     (*obj) = NULL;
                     deleteCalendar(tempCal);
-
                     free(readLine);
                     fclose(fp);
                     return INV_CAL;
                   }
                 }
-
                 break;
-
                 //used when adding to event struct
                 case 2:
                 //create new event, add the shit.
                 if(strcmp(tempStr,"UID") == 0){
                   tempStr = strtok(NULL,"");
+                  if(tempStr == NULL){
+                    (*obj) = NULL;
+                    deleteCalendar(tempCal);
+                    deleteEvent(tempEvent);
+                    free(readLine);
+                    fclose(fp);
+                    return INV_EVENT;
+                  }
+                  //check if UID already exists
+                  if(strcmp(tempEvent->UID,"")!=0){
+                    (*obj) = NULL;
+                    deleteCalendar(tempCal);
+                    deleteEvent(tempEvent);
+                    free(readLine);
+                    fclose(fp);
+                    return INV_EVENT;
+                  }
                   strcpy(tempEvent->UID,tempStr);
                   break;
                 }else if(strcmp(tempStr,"DTSTAMP") == 0){
                   tempStr = strtok(NULL,"");
                   if(tempStr == NULL){
                     //printf("inv event\r\n" );
+                    (*obj) = NULL;
+                    deleteCalendar(tempCal);
+                    deleteEvent(tempEvent);
+                    free(readLine);
+                    fclose(fp);
+                    return INV_EVENT;
+                  }
+
+                  //check if creation date already exitsts
+                  if(strcmp(tempEvent->creationDateTime.date,"")!=0
+                  ||strcmp(tempEvent->creationDateTime.time,"")!=0){
                     (*obj) = NULL;
                     deleteCalendar(tempCal);
                     deleteEvent(tempEvent);
@@ -471,10 +485,8 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
                   if(isValidDateTime(tempEvent->creationDateTime)==1){
                     deleteCalendar(tempCal);
                     (*obj) = NULL;
-
                     free(readLine);
                     //down two levels of abstractions so we delete these
-
                     deleteEvent(tempEvent);
                     fclose(fp);
                     return INV_DT;
@@ -488,7 +500,16 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
                     (*obj) = NULL;
                     deleteCalendar(tempCal);
                     deleteEvent(tempEvent);
+                    free(readLine);
+                    fclose(fp);
+                    return INV_EVENT;
+                  }
 
+                  //check if datetime already exitsts
+                  if(strcmp(tempEvent->startDateTime.date,"")!=0 ||strcmp(tempEvent->startDateTime.time,"")!=0){
+                    (*obj) = NULL;
+                    deleteCalendar(tempCal);
+                    deleteEvent(tempEvent);
                     free(readLine);
                     fclose(fp);
                     return INV_EVENT;
@@ -504,7 +525,6 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
                   if(isValidDateTime(tempEvent->startDateTime)==1){
                     deleteCalendar(tempCal);
                     (*obj) = NULL;
-
                     free(readLine);
                     //down two levels of abstractions so we delete these
                     deleteEvent(tempEvent);
@@ -515,11 +535,9 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
                 }else{
 
                   if(addPropertyEvent(tempStr,&tempEvent)==INV_EVENT ){
-
                     (*obj) = NULL;
                     deleteCalendar(tempCal);
                     deleteEvent(tempEvent);
-
                     free(readLine);
                     fclose(fp);
                     return INV_EVENT;
@@ -531,12 +549,13 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
                 case 3:
                   if(strcmp(tempStr,"ACTION") == 0){
                     tempStr = strtok(NULL,"");
-                    if(tempStr == NULL){
-                      //printf("INV ALARM\r\n" );
+                    //check if action already exists
+                    if(tempStr == NULL || strcmp(tempAlarm->action,"")!=0){
+                      printf("INV ALARM\r\n" );
                       (*obj) = NULL;
                       deleteCalendar(tempCal);
                       deleteAlarm(tempAlarm);
-
+                      deleteEvent(tempEvent);
                       free(readLine);
                       fclose(fp);
                       return INV_ALARM;
@@ -545,12 +564,13 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
 
                   }else if(strcmp(tempStr,"TRIGGER") == 0){
                     tempStr = strtok(NULL,":");
-                    if(tempStr == NULL){
-                      //printf("INV ALARM\r\n" );
+                    //check if trigger already exists
+                    if(tempStr == NULL || tempAlarm->trigger != NULL){
+                      printf("2INV ALARM\r\n" );
                       (*obj) = NULL;
                       deleteCalendar(tempCal);
                       deleteAlarm(tempAlarm);
-
+                      deleteEvent(tempEvent);
                       free(readLine);
                       fclose(fp);
                       return INV_ALARM;
@@ -560,28 +580,21 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
                   }else{
                     //propertie
                     if(addPropertyAlarm(tempStr,&tempAlarm) == INV_ALARM){
-
                       deleteCalendar(tempCal);
                       (*obj) = NULL;
-
                       free(readLine);
-                      //down two levels of abstractions so we delete these
                       deleteAlarm(tempAlarm);
                       deleteEvent(tempEvent);
                       fclose(fp);
                       return INV_ALARM;
                     }
                   }
-
-
                 break;
                 //error has occurred
                 // default:
                 // //printf("ERROR ICALENDAR OBJECT BEGAN INCORRECT\r\n");
               }
-
             }
-
 
           //resets readLine and copies next line to it. as well resets factor for reallocing readLine
           //makes it so last line is not processed in loop and is delt with afterwards
@@ -590,19 +603,16 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
           lineFactor =1;
         }
       }
-
     }
 
     /*
     THIS STUFF has to be repeated twice becuase i did not have forthought.
     so we just check the last line like we do before, this stuff wont matter if
     last line is a commnet.
-
     */
     if(readLine[0] != ';'){
       ////printf("last line is \"%s\"\r\n",readLine);
       tempStr = strtok(readLine,":;");
-
       //check if last line is
       if(strcmp(tempStr,"END")==0){
         tempStr = strtok(NULL,"");
@@ -620,7 +630,6 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
               //printf("1inv cal\r\n");
               (*obj) = NULL;
               deleteCalendar(tempCal);
-
               free(readLine);
               fclose(fp);
               return INV_CAL;
@@ -629,7 +638,6 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
               //printf("1inv cal\r\n");
               (*obj) = NULL;
               deleteCalendar(tempCal);
-
               free(readLine);
               fclose(fp);
               return INV_CAL;
@@ -641,7 +649,6 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
               (*obj) = NULL;
               deleteCalendar(tempCal);
               deleteEvent(tempEvent);
-
               free(readLine);
               fclose(fp);
               return INV_EVENT;
@@ -652,7 +659,6 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
               (*obj) = NULL;
               deleteCalendar(tempCal);
               deleteEvent(tempEvent);
-
               free(readLine);
               fclose(fp);
               return INV_EVENT;
@@ -665,7 +671,6 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
               deleteCalendar(tempCal);
               deleteEvent(tempEvent);
               deleteAlarm(tempAlarm);
-
               free(readLine);
               fclose(fp);
               return INV_ALARM;
@@ -676,7 +681,6 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
               deleteCalendar(tempCal);
               deleteEvent(tempEvent);
               deleteAlarm(tempAlarm);
-
               free(readLine);
               fclose(fp);
               return INV_ALARM;
@@ -688,7 +692,6 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
           (*obj)=NULL;
           deleteEvent(tempEvent);
           deleteAlarm(tempAlarm);
-
           free(readLine);
           fclose(fp);
           return OTHER_ERROR;
@@ -879,6 +882,10 @@ ICalErrorCode writeCalendar(char* fileName, const Calendar* obj){
     return INV_FILE;
   }
 
+  if(obj == NULL){
+    return INV_CAL;
+  }
+
   //  initilizes values to 0, unlike malloc.
   toRtrn = calloc(100,sizeof(char));
   temp = calloc(100,sizeof(char));
@@ -937,9 +944,10 @@ ICalErrorCode validateCalendar(const Calendar* obj){
   void* elemTwo;
   void* elemThree;
 
+
   if(obj == NULL) return INV_CAL;
 
-  //ensure Calendar has UID, creation/start date
+  //ensure Calendar has UID, creation/start date, and at least 1 event
   if(strcmp(obj->prodID,"")== 0) return INV_CAL;
   if(obj->version <= 0) return INV_CAL;
   if(getFromFront(obj->events) == NULL) return INV_CAL;
@@ -962,14 +970,17 @@ ICalErrorCode validateCalendar(const Calendar* obj){
       Alarm* tempAlarm = (Alarm*)elemTwo;
       if(tempAlarm == NULL) return INV_EVENT;
       if(strcmp(tempAlarm->action,"")==0)return INV_ALARM;
+      //check trigger is not null and not blank
       if(tempAlarm->trigger == NULL) return INV_ALARM;
+      if(strcmp(tempAlarm->trigger,"")==0)return INV_ALARM;
 
       //check all properties are valid within alarm
+      if(tempAlarm->properties == NULL) return INV_ALARM;
+
       iterThree = createIterator(tempAlarm->properties);
       while((elemThree = nextElement(&iterThree)) != NULL){
         Property* tempProp = (Property*)elemThree;
         if(isValidAlarmProperty(tempProp,tempAlarm) == 0) return INV_ALARM;
-
       }
     }
 
@@ -979,7 +990,7 @@ ICalErrorCode validateCalendar(const Calendar* obj){
     iterThree = createIterator(tempEvent->properties);
     while((elemThree = nextElement(&iterThree)) != NULL){
       Property* tempProp = (Property*)elemThree;
-      if(isValidEventProperty(tempProp,tempEvent) == 0) return INV_CAL;
+      if(isValidEventProperty(tempProp,tempEvent) == 0) return INV_EVENT;
     }
   }
 
@@ -1385,13 +1396,30 @@ int isValidDateTime(DateTime obj){
 
 //checks if input propertie is valud for calendar properties
 int isValidProperty(Property *obj){
+  char* toCompare;
+  int len;
+
   if(obj == NULL) return 0;
 
   if(strcmp(obj->propName,"") == 0) return 0;
 
   if(strcmp(obj->propDescr,"")==0) return 0;
 
-  return 1;
+  len = strlen(obj->propName);
+  toCompare = malloc(sizeof(char)*len+1);
+  strcpy(toCompare, obj->propName);
+  strUpper(toCompare);
+
+  //can only be two properties but may occur more than once
+  //so we only need to check for valid name
+  if(strcmp(toCompare,"CALSCALE")==0 || strcmp(toCompare,"METHOD")==0){
+    free(toCompare);
+    return 1;
+  }
+
+
+  free(toCompare);
+  return 0;
 }
 
 //checks event properties
@@ -1412,12 +1440,7 @@ int isValidEventProperty(Property *obj,Event *tempEvent){
   toCompare = malloc(sizeof(char)*len+1);
   strcpy(toCompare, obj->propName);
   strUpper(toCompare);
-  // strlength = strlen(propDes);
-  // //convert to uppercase
-  // while(*propDes){
-  //   *propDes = toupper((unsigned char) *propDes);
-  //   propDes++;
-  // }
+
 
     //add all valid property names to list
     propDes[0] = "CLASS";
@@ -1487,7 +1510,6 @@ int isValidEventProperty(Property *obj,Event *tempEvent){
           return 0;
         }
       }
-
     }
 
     for(i=0;i<26;i++){
@@ -1539,8 +1561,8 @@ int isValidAlarmProperty(Property *obj,Alarm *tempAlarm){
   while((elem = nextElement(&iter)) != NULL){
     Property* tempProp = (Property*)elem;
 
-    //ignore when both are pointing to same object
-    if(obj != tempProp ){
+    //ignore when both are pointing to same object or item is attach because there can be multiple
+    if(obj != tempProp && strcmp(toCompare,"ATTACH") != 0 ){
       if(strcmp(obj->propDescr,tempProp->propDescr) == 0
       && strcmp(obj->propName,tempProp->propName) == 0){
         // printf("des 1:%s:  2:%s:\n", obj->propDescr,tempProp->propDescr);
@@ -1551,6 +1573,7 @@ int isValidAlarmProperty(Property *obj,Alarm *tempAlarm){
     }
   }
 
+  //must be one of the allowed properties
   for(i =0;i<3;i++){
     if(strcmp(toCompare,propDes[i])==0){
       free(toCompare);
