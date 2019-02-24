@@ -1005,6 +1005,152 @@ ICalErrorCode validateCalendar(const Calendar* obj){
 }
 
 
+
+/** Function to converting a DateTime into a JSON string
+ *@pre N/A
+ *@post DateTime has not been modified in any way
+ *@return A string in JSON format
+ *@param prop - a DateTime struct
+ **/
+char* dtToJSON(DateTime prop){
+  char* toRtrn;
+  char boolString[6];
+  if(prop.UTC == true){
+    strcpy(boolString,"true");
+  }else{
+    strcpy(boolString,"false");
+  }
+  toRtrn = malloc(sizeof(char)*256);
+  sprintf(toRtrn,"{\"date\":\"%s\",\"time\":\"%s\",\"isUTC\":%s}",prop.date,prop.time,boolString);
+
+  return toRtrn;
+}
+
+/** Function to converting an Event into a JSON string
+ *@pre Event is not NULL
+ *@post Event has not been modified in any way
+ *@return A string in JSON format
+ *@param event - a pointer to an Event struct
+ **/
+char* eventToJSON(const Event* event){
+  char *toRtrn;
+  char *dt;
+  char *summary = NULL;
+  ListIterator iter;
+  void* elem;
+  int propCount,alarmCount;
+
+  if(event == NULL){
+    toRtrn = malloc(sizeof(char)*3);
+    strcpy(toRtrn,"{}");
+    return toRtrn;
+  }
+  dt = dtToJSON(event->startDateTime);
+  //look for summary propertie
+  iter = createIterator(event->properties);
+  while ((elem = nextElement(&iter)) != NULL){
+      Property* tempProp = (Property*)elem;
+      char *pName = tempProp->propName;
+      strUpper(pName);
+      if(strcmp(pName,"SUMMARY")==0){
+        summary = malloc(sizeof(char)*strlen(tempProp->propDescr)+1);
+        strcpy(summary,tempProp->propDescr);
+        break;
+      }
+  }
+  if(summary == NULL){
+    summary = malloc(sizeof(char)*2);
+    strcpy(summary,"");
+  }
+
+  propCount = event->properties->length +3;
+  alarmCount = event->alarms->length;
+  toRtrn = malloc(sizeof(char)*256);
+  sprintf(toRtrn,"{\"startDT\":%s,\"numProps\":%d,\"numAlarms\":%d,\"summary\":\"%s\"}",dt,propCount,alarmCount,summary);
+
+  free(summary);
+  free(dt);
+
+  return toRtrn;
+}
+
+/** Function to converting an Event list into a JSON string
+ *@pre Event list is not NULL
+ *@post Event list has not been modified in any way
+ *@return A string in JSON format
+ *@param eventList - a pointer to an Event list
+ **/
+char* eventListToJSON(const List* eventList){
+  char *toRtrn;
+  char *temp;
+
+  ListIterator iter;
+  void* elem;
+
+  if(eventList == NULL){
+    toRtrn = malloc(sizeof(char)*3);
+    strcpy(toRtrn,"[]");
+    return toRtrn;
+  }
+
+  iter = createIterator(eventList);
+  elem = nextElement(&iter);
+  Event* tempEvent = (Event*)elem;
+  if(elem == NULL){
+    toRtrn = malloc(sizeof(char)*3);
+    strcpy(toRtrn,"[]");
+    return toRtrn;
+  }
+
+  toRtrn = eventToJSON(tempEvent);
+  while ((elem = nextElement(&iter)) != NULL){
+    tempEvent = (Event*)elem;
+    temp = eventToJSON(tempEvent);
+    sprintf(temp,",%s",temp);
+    toRtrn = realloc(toRtrn,strlen(toRtrn) + strlen(temp)+1);
+  }
+  toRtrn = realloc(toRtrn,strlen(toRtrn)+4);
+  sprintf(temp,"[%s]",temp);
+
+  return toRtrn;
+}
+
+/** Function to converting a Calendar into a JSON string
+ *@pre Calendar is not NULL
+ *@post Calendar has not been modified in any way
+ *@return A string in JSON format
+ *@param cal - a pointer to a Calendar struct
+ **/
+char* calendarToJSON(const Calendar* cal);
+
+/** Function to converting a JSON string into a Calendar struct
+ *@pre JSON string is not NULL
+ *@post String has not been modified in any way
+ *@return A newly allocated and partially initialized Calendar struct
+ *@param str - a pointer to a string
+ **/
+Calendar* JSONtoCalendar(const char* str);
+
+/** Function to converting a JSON string into an Event struct
+ *@pre JSON string is not NULL
+ *@post String has not been modified in any way
+ *@return A newly allocated and partially initialized Event struct
+ *@param str - a pointer to a string
+ **/
+Event* JSONtoEvent(const char* str);
+
+/** Function to adding an Event struct to an ixisting Calendar struct
+ *@pre arguments are not NULL
+ *@post The new event has been added to the calendar's events list
+ *@return N/A
+ *@param cal - a Calendar struct
+ *@param toBeAdded - an Event struct
+ **/
+void addEvent(Calendar* cal, Event* toBeAdded);
+
+
+
+
 // ************* List helper functions - MUST be implemented ***************
 void deleteEvent(void* toBeDeleted){
   Event *tempEvent;

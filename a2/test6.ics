@@ -5,6 +5,7 @@ BEGIN:VEVENT
 UID:uid1@example.com
 DTSTAMP:19970714T170000Z
 DTSTART:19970714T170000
-RDATE:I too am a comment
+SUMMARY:I too am a comment
+RDate:I too am a comment
 END:EVENT
 END:VCALENDAR
