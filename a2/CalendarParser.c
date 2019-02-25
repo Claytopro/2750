@@ -1082,7 +1082,8 @@ char* eventToJSON(const Event* event){
  **/
 char* eventListToJSON(const List* eventList){
   char *toRtrn;
-  char *temp;
+  char *temp = NULL;
+  char *temp2=NULL;
 
   ListIterator iter;
   void* elem;
@@ -1093,7 +1094,7 @@ char* eventListToJSON(const List* eventList){
     return toRtrn;
   }
 
-  iter = createIterator(eventList);
+  iter = createConstIterator(eventList);
   elem = nextElement(&iter);
   Event* tempEvent = (Event*)elem;
   if(elem == NULL){
@@ -1103,16 +1104,28 @@ char* eventListToJSON(const List* eventList){
   }
 
   toRtrn = eventToJSON(tempEvent);
+  //defiantly could of designed this better but its fine
+  //iterate though events adding a comma to begging of JSON string then
+  //concatonating to end of return string
   while ((elem = nextElement(&iter)) != NULL){
     tempEvent = (Event*)elem;
+    temp2=malloc(sizeof(char)*3);
+    strcpy(temp2,",");
     temp = eventToJSON(tempEvent);
-    sprintf(temp,",%s",temp);
-    toRtrn = realloc(toRtrn,strlen(toRtrn) + strlen(temp)+1);
-  }
-  toRtrn = realloc(toRtrn,strlen(toRtrn)+4);
-  sprintf(temp,"[%s]",temp);
+    temp2 = realloc(temp2,sizeof(char)*strlen(temp)+3);
+    strcat(temp2,temp);
 
-  return toRtrn;
+    toRtrn = realloc(toRtrn,strlen(toRtrn) + strlen(temp2)+1);
+    strcat(toRtrn,temp2);
+  }
+
+  //toRtrn = realloc(toRtrn,strlen(toRtrn)+4);
+  temp = realloc(temp,sizeof(char)*strlen(toRtrn)+4);
+  sprintf(temp,"[%s]",toRtrn);
+
+  free(toRtrn);
+  free(temp2);
+  return temp;
 }
 
 /** Function to converting a Calendar into a JSON string
@@ -1121,7 +1134,29 @@ char* eventListToJSON(const List* eventList){
  *@return A string in JSON format
  *@param cal - a pointer to a Calendar struct
  **/
-char* calendarToJSON(const Calendar* cal);
+char* calendarToJSON(const Calendar* cal){
+  char *toRtrn;
+  char *prodIDVal = NULL;
+  float ver;
+  int numProps,numEvents;
+
+  if(cal == NULL){
+    toRtrn = malloc(sizeof(char)*3);
+    strcpy(toRtrn,"[]");
+    return toRtrn;
+  }
+  prodIDVal = malloc(sizeof(char)*201);
+  strcpy(prodIDVal,cal->prodID);
+  ver = cal->version;
+  numProps = getLength(cal->properties) +2;
+  numEvents = getLength(cal->events);
+
+  toRtrn = malloc(sizeof(char)*256);
+  sprintf(toRtrn,"{\"version\":%.2f,\"prodID\":\"%s\",\"numProps\":%d,\"numEvents\":%d}",ver,prodIDVal,numProps,numEvents);
+
+  free(prodIDVal);
+  return toRtrn;
+}
 
 /** Function to converting a JSON string into a Calendar struct
  *@pre JSON string is not NULL
@@ -1137,7 +1172,17 @@ Calendar* JSONtoCalendar(const char* str);
  *@return A newly allocated and partially initialized Event struct
  *@param str - a pointer to a string
  **/
-Event* JSONtoEvent(const char* str);
+Event* JSONtoEvent(const char* str){
+  Event *tempEvent;
+  char *tempUID;
+  if(str == NULL) return NULL;
+  if(strcmp(str,"")==0) return NULL;
+
+  
+
+
+  return tempEvent;
+}
 
 /** Function to adding an Event struct to an ixisting Calendar struct
  *@pre arguments are not NULL
@@ -1146,7 +1191,14 @@ Event* JSONtoEvent(const char* str);
  *@param cal - a Calendar struct
  *@param toBeAdded - an Event struct
  **/
-void addEvent(Calendar* cal, Event* toBeAdded);
+void addEvent(Calendar* cal, Event* toBeAdded){
+
+  if(toBeAdded == NULL) return;
+  if(cal == NULL) return;
+
+  insertBack(cal->events,toBeAdded);
+
+}
 
 
 
@@ -1729,4 +1781,13 @@ int isValidAlarmProperty(Property *obj,Alarm *tempAlarm){
 
   free(toCompare);
   return 1;
+}
+
+//function to help with eventListToJSON
+ListIterator createConstIterator(const List* list){
+    ListIterator iter;
+
+    iter.current = list->head;
+
+    return iter;
 }

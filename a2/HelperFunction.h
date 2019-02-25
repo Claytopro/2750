@@ -31,4 +31,6 @@ int isValidAlarmProperty(Property *obj,Alarm *tempAlarm);
 //sets to upper case
 void strUpper(char string[]);
 
+ListIterator createConstIterator(const List* list);
+
 #endif

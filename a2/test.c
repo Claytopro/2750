@@ -12,6 +12,7 @@ int main(){
   Calendar *tester = NULL;
   char *calendarToPtr;
   void* elem;
+  char* temp;
 
   ListIterator iter;
 
@@ -29,24 +30,30 @@ printf("--------TESTING VALID EVENT PROPERTY---\n");
         if(tester != NULL){
           calendarToPtr = printCalendar(tester);
           printf("%s\n",calendarToPtr);
-          printf("validate Calendar:%s\n", printError(validateCalendar(tester)));
+          free(calendarToPtr);
+          temp = printError(validateCalendar(tester));
+          printf("validate Calendar:%s\n", temp);
+          free(temp);
 
           printf("--------TESTING DT TO JSON---\n");
 
           iter = createIterator(tester->events);
         	while ((elem = nextElement(&iter)) != NULL){
           Event* tempEvent = (Event*)elem;
-
-            printf("JSONT DT TEST:%s\n",eventToJSON(tempEvent));
-
+            temp = eventToJSON(tempEvent);
+            printf("JSONT DT TEST:%s\n",temp);
+            free(temp);
         	}
+          temp = eventListToJSON(tester->events);
+          printf("--------TESTING event list to JSON---\n%s\n\n",temp);
+          free(temp);
 
+          temp = calendarToJSON(tester);
+          printf("--------TESTING CALENDAR to JSON---\n%s\n\n",temp);
+          free(temp);
 
           writeCalendar("test5.ics",tester);
-          if(calendarToPtr != NULL){
-            //  printf("Freeing calendarString\n" );
-            free(calendarToPtr);
-          }
+
           deleteCalendar(tester);
         }
       }
@@ -63,24 +70,32 @@ printf("--------TESTING VALID EVENT PROPERTY---\n");
               if(tester != NULL){
                 calendarToPtr = printCalendar(tester);
                 printf("%s\n",calendarToPtr);
-                printf("validate Calendar:%s\n", printError(validateCalendar(tester)));
+                free(calendarToPtr);
+                temp = printError(validateCalendar(tester));
+                printf("validate Calendar:%s\n", temp);
+                free(temp);
 
                 printf("--------TESTING EVENT JSON WITH SUMMARY---\n");
 
                 iter = createIterator(tester->events);
               	while ((elem = nextElement(&iter)) != NULL){
                 Event* tempEvent = (Event*)elem;
-
-                  printf("JSONT DT TEST:%s\n",eventToJSON(tempEvent));
+                  temp = eventToJSON(tempEvent);
+                  printf("JSONT DT TEST:%s\n",temp);
+                  free(temp);
 
               	}
+                printf("break point\n");
+                temp = eventListToJSON(tester->events);
+                printf("--------TESTING event list to JSON w/ 1 event---\n%s\n\n",temp);
+                free(temp);
 
+                temp = calendarToJSON(tester);
+                printf("--------TESTING CALENDAR to JSON with 1 event---\n%s\n\n",temp);
+                free(temp);
 
                 writeCalendar("test6.ics",tester);
-                if(calendarToPtr != NULL){
-                  //  printf("Freeing calendarString\n" );
-                  free(calendarToPtr);
-                }
+
                 deleteCalendar(tester);
               }
             }

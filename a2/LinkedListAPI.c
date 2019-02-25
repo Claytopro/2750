@@ -305,6 +305,8 @@ ListIterator createIterator(List* list){
     return iter;
 }
 
+
+
 void* nextElement(ListIterator* iter){
     Node* tmp = iter->current;
 
