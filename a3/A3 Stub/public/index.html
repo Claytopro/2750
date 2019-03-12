@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Calendar Viewer</title>
+    <style>
+      table, th, td {
+        border: 1px solid black;
+        border-collapse: collapse;
+      }
+    </style>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="CHANGE ME">
+    <meta name="keywords" content="CHANGE ME">
+    <meta name="author" content="CHANGE ME">
+    <!-- Load jquery, bootstrap -->
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" type="text/css" href="/style.css">
+    <!-- Custom CSS End -->
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-light bg-light">
+  <a class="navbar-brand" href="#">Navbar</a>
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+
+  <div class="collapse navbar-collapse" id="navbarSupportedContent">
+    <ul class="navbar-nav mr-auto">
+      <li class="nav-item">
+        <a class="nav-link" href="#">Link</a>
+      </li>
+      <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          Dropdown
+        </a>
+        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+          <a class="dropdown-item" href="#">Action</a>
+          <a class="dropdown-item" href="#">Another action</a>
+          <div class="dropdown-divider"></div>
+          <a class="dropdown-item" href="#">Something else here</a>
+        </div>
+      </li>
+    </ul>
+    <form class="form-inline my-2 my-lg-0">
+      <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
+      <button class="btn btn-primary" type="button">Search</button>
+    </form>
+  </div>
+</nav>
+
+
+  <div ref = 'Status Panel' id = 'sPan'>
+    <h2 style="text-align:center"> Status Panel </h2>
+
+    <div class="statsButtons-div" id ="statBtnDiv" align="center">
+      <button class="btn btn-primary" type="button" onclick='clearText("statusDiv")'
+      data-toggle="tooltip" data-placement="top" title="Clear all data in status panel">
+      test clearing </button>
+    </div>
+
+    <div class = "status-div" id = "statusDiv"
+      style="height:60px;border:4px solid #ccc;font:16px/26px Georgia, Garamond, Serif;padding: 5px;overflow:auto;">
+
+    </div>
+  </div>
+
+  <div ref = 'File Log Panel' id = 'lPan'>
+    <h2 style="text-align:center"> File Log Panel </h2>
+      <button class="btn btn-primary" type="button" onclick='addText()' >test adding text </button>
+      <button name="testBtn" type="button" onclick='addToFileTable()'Hide/Show>Test adding row</button>
+
+    <div class = "form-group"
+    style="height:240px;border:4px solid #ccc;font:16px/26px Georgia, Garamond, Serif;padding: 5px;overflow-x:scroll;overflow-y:scroll;">
+        <table class = "table table-hover" id ="fileTable" align ="center" style="width:640px;text-align:center">
+            <tr height:100px>
+              <th>File name (click to download)</th>
+              <th>Version</th>
+              <th>Product ID</th>
+              <th>Number of events</th>
+              <th>Number of properties</th>
+            </tr>
+            <tr>
+              <td><a href="/uploads/testCalSimpleUTC.ics">testCalSimpleUTC.ics</a></td>
+              <td> test </td>
+              <td> test </td>
+              <td> test </td>
+              <td> test </td>
+              <td> test </td>
+            </tr>
+
+        </table>
+
+    </div>
+
+    <div class="uploadDiv">
+        <form action="/action_page.php">
+          <button class="btn btn-primary" type="button" onclick='addText()' >test upload</button>
+        File Name:
+        <input type="text" name="file name" value="example.ics">
+
+        <input type="submit" value="Submit">
+        </form>
+    </div>
+  </div>
+
+    <div ref = 'Calendar View Panel' id = 'cPan'>
+      <h2 style="text-align:center"> Calendar View Panel </h2>
+      <div class ="calDropdown">
+      <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown">Dropdown Example<span class="caret"></span></button>
+        <ul class="dropdown-menu">
+        <li><a href="#">HTML</a></li>
+        <li><a href="#">CSS</a></li>
+        <li><a href="#">JavaScript</a></li>
+        </ul>
+      </div>
+      <div class = "Calendar-group"
+        style="height:120px;border:4px solid #ccc;font:16px/26px Georgia, Garamond, Serif;padding: 5px;overflow-x:scroll;overflow-y:scroll;">
+            <table id ="calTable" align ="center" style="width:640px;text-align:center">
+              <tr>
+                <th>File name (click to download)</th>
+                <th>Version</th>
+                <th>Product ID</th>
+                <th>Number of events</th>
+                <th>Number of properties</th>
+              </tr>
+              <tr>
+                <td>test</td>
+                <td>test</td>
+                <td>test</td>
+                <td>test</td>
+                <td>test</td>
+              </tr>
+
+          </table>
+      </div>
+    </div>
+
+    <div ref = 'additonalFunc', id = 'addFunctions'>
+      <h3 style="text-align:left"> create Calendar
+          <button class="btn btn-primary" type="button" onclick='addText()' >test Create Cal</button>
+
+      <h3 style="text-align:left"> Create Event
+         <button class="btn btn-primary" type="button" onclick='addText()' >test Create Event</button>
+         </h3>
+    </div>
+    <!-- Leave me at the bottom of body -->
+    <script src="/index.js">
+
+    }</script>
+
+</body>
+</html>
