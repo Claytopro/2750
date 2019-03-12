@@ -42,16 +42,20 @@ $(document).ready(function() {
         type: 'get',            //Request type
         url: '/uploads/',   //The server endpoint we are connecting to
         success: function (data) {
-          let tableContent ='';
+          let html ='';
           let table = document.getElementById("fileTable");
-
+          let dropdown = document.getElementById("ddFiles");
           $.each(data, function(){
             let row = table.insertRow(-1);
             let cellName = row.insertCell(0);
-            cellName.innerHTML = this;
+            cellName.innerHTML = '<a href="/uploads/testCalSimpleUTC.ics">'+this+'</a>';
 
           });
-          console.log(tableContent);
+
+          $.each(data, function() {
+              $(dropdown).append( '<li><a class="dropdown-item" href="#">' + this + '</a></li>' );
+
+          });
 
         },
         fail: function(error) {
