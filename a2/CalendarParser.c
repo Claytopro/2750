@@ -32,7 +32,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
     //used to hold the line of information
     //holds 75 bytes, 1 null poiner and potentially
     //3 extra bytes to indicate line break"/r/n "
-    char bufferLine[80];
+    char bufferLine[20000];
     //temp string for processing data
     char *tempStr = NULL;
     char *fileExtension = NULL;
@@ -48,7 +48,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
 
     //OLD:readLine = malloc(sizeof(char)*(80*lineFactor));
     //use calloc to fix valgring conditional jump errors
-    readLine = calloc(80,sizeof(char));
+    readLine = calloc(20000,sizeof(char));
 
     //readLine = NULL;
   //  bufferLine = malloc(sizeof(char)*(80*lineFactor));
@@ -82,6 +82,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
       if(fp != NULL){
         fclose(fp);
       }
+
       return INV_FILE;
     }
     //fileExtension no longer used
@@ -90,7 +91,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
 
 
     /*reads through each character in the file*/
-    while(fgets(bufferLine, 80,fp)){
+    while(fgets(bufferLine, 20000,fp)){
       lineLength = strlen(bufferLine);
       //empty line is foudn and that is bad so we return error, INV_CAL
       if(lineLength == 2){
@@ -114,6 +115,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
         deleteAlarm(tempAlarm);
         deleteCalendar(tempCal);
         fclose(fp);
+        printf("FAILED EHRERE %s\n",bufferLine );
         return INV_FILE;
       }
       //remove newline, should be fine for new line at beginnign becayse fgets will read until then
@@ -123,9 +125,10 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
       if(bufferLine[0] != ';'){
         //test for folded line, else line is valid and can be parsed
         if(bufferLine[0] == ' ' || bufferLine[0] == '\t'){
+
           lineFactor++;
           //realloc enough memory to concatonate strings together.
-          readLine = realloc(readLine,sizeof(char)*(80*lineFactor));
+          readLine = realloc(readLine,sizeof(char)*(20000*lineFactor));
 
           //gets rid of space or half tab
           memmove(bufferLine, bufferLine+1, strlen(bufferLine));
@@ -532,7 +535,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
                     strcpy(tempAlarm->action,tempStr);
 
                   }else if(strcmp(tempStr,"TRIGGER") == 0){
-                    tempStr = strtok(NULL,":");
+                    tempStr = strtok(NULL,"");
                     //check if trigger already exists
                     if(tempStr == NULL || tempAlarm->trigger != NULL){
                       printf("2INV ALARM\r\n" );
@@ -613,7 +616,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
             }
           break;
           case 2:
-            printf("this\n" );
+
             if(strcmp(tempStr,"VEVENT")!=0){
               //printf("inv event\r\n" );
               (*obj) = NULL;
@@ -675,7 +678,8 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
       //printf("inv cal\r\n");
       (*obj) = NULL;
       deleteCalendar(tempCal);
-
+      deleteEvent(tempEvent);
+      deleteAlarm(tempAlarm);
       free(readLine);
       fclose(fp);
       return INV_CAL;
@@ -692,7 +696,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
     }
 
     *obj = tempCal;
-
+    printf("FILE:%s\n",fileName );
 
     free(readLine);
     fclose(fp);
@@ -852,7 +856,7 @@ ICalErrorCode writeCalendar(char* fileName, const Calendar* obj){
 
   fp = fopen(fileName,"w+");
   if(fp == NULL){
-    return INV_FILE;
+    return WRITE_ERROR;
   }
 
   if(obj == NULL){
@@ -903,6 +907,7 @@ ICalErrorCode writeCalendar(char* fileName, const Calendar* obj){
 
   free(toRtrn);
   fclose(fp);
+
   return OK;
 }
 
@@ -922,9 +927,12 @@ ICalErrorCode validateCalendar(const Calendar* obj){
   if(obj == NULL) return INV_CAL;
 
   //ensure Calendar has UID, creation/start date, and at least 1 event
+  if(obj->events == NULL) return INV_CAL;
   if(strcmp(obj->prodID,"")== 0) return INV_CAL;
   if(obj->version <= 0) return INV_CAL;
   if(getFromFront(obj->events) == NULL) return INV_CAL;
+  if(obj->properties == NULL) return INV_CAL;
+
 
   iter = createIterator(obj->events);
   //check if all events are valid
@@ -1115,7 +1123,7 @@ char* calendarToJSON(const Calendar* cal){
 
   if(cal == NULL){
     toRtrn = malloc(sizeof(char)*3);
-    strcpy(toRtrn,"[]");
+    strcpy(toRtrn,"{}");
     return toRtrn;
   }
   prodIDVal = malloc(sizeof(char)*201);
@@ -1440,7 +1448,13 @@ char* printProperty(void* toBePrinted){
   tempProp = (Property*)toBePrinted;
 
   toRtrn = calloc(201+ strlen(tempProp->propDescr),sizeof(char));
-  sprintf(toRtrn,"%s:%s",tempProp->propName,tempProp->propDescr);
+  if(strcmp(tempProp->propName,"ATTACH")==0){
+    sprintf(toRtrn,"%s;%s",tempProp->propName,tempProp->propDescr);
+
+  }else{
+
+    sprintf(toRtrn,"%s:%s",tempProp->propName,tempProp->propDescr);
+  }
 
 
   return toRtrn;
@@ -1786,7 +1800,7 @@ int isValidAlarmProperty(Property *obj,Alarm *tempAlarm){
 
 
   free(toCompare);
-  return 1;
+  return 0;
 }
 
 //function to help with eventListToJSON

@@ -39,10 +39,10 @@
           Dropdown
         </a>
         <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-          <a class="dropdown-item" href="#">Action</a>
-          <a class="dropdown-item" href="#">Another action</a>
+          <a class="dropdown-item" href="#">I</a>
+          <a class="dropdown-item" href="#">JUST LIKE</a>
           <div class="dropdown-divider"></div>
-          <a class="dropdown-item" href="#">Something else here</a>
+          <a class="dropdown-item" href="#">HOW THIS LOOKS</a>
         </div>
       </li>
     </ul>
@@ -60,48 +60,50 @@
     <div class="statsButtons-div" id ="statBtnDiv" align="center">
       <button class="btn btn-outline-dark" type="button" onclick='clearText("statusDiv")'
       data-toggle="tooltip" data-placement="top" title="Clear all data in status panel">
-      test clearing </button>
+      Clear Status Panel</button>
     </div>
 
     <div class = "status-div" id = "statusDiv"
-      style="height:60px;border:4px solid #ccc;font:16px/26px Georgia, Garamond, Serif;padding: 5px;overflow:auto;">
-
+      style="height:120px;border:4px solid #ccc;font:16px/26px Georgia, Garamond, Serif;padding: 5px;overflow:auto;">
     </div>
   </div>
 
-  <div ref = 'File Log Panel' id = 'lPan'>
+  <div ref = 'File Log Panel'>
     <h2 style="text-align:center"> File Log Panel </h2>
-      <button class="btn btn-outline-dark" type="button" onclick='addText()' >test adding text </button>
 
-    <div class = "form-group"
-    style="height:240px;border:4px solid #ccc;font:16px/26px Georgia, Garamond, Serif;padding: 5px;overflow-x:scroll;overflow-y:scroll;">
-        <table class = "table table-hover" id ="fileTable" align ="center" style="width:640px;text-align:center">
-            <tr height:100px>
+    <div class = "form-group" id = "fileForm"
+    style="height:270px;border:4px solid #ccc;font:16px/26px Georgia, Garamond, Serif;padding: 5px;overflow-x:scroll;overflow-y:scroll;">
+
+        <table id ="fileTable" class = "table table-hover" align ="center" style="width:640px;text-align:center;visibility: hidden;" >
+
               <th>File name (click to download)</th>
               <th>Version</th>
               <th>Product ID</th>
               <th>Number of events</th>
               <th>Number of properties</th>
-            </tr>
-            <tr>
-              <td><a href="/uploads/testCalSimpleUTC.ics">testCalSimpleUTC.ics</a></td>
-              <td> test </td>
-              <td> test </td>
-              <td> test </td>
-              <td> test </td>
-
-            </tr>
 
         </table>
-
     </div>
 
-    <div class="uploadDiv">
+    <div id = "uploadDiv">
+      <label class="btn btn-outline-dark" id='upload-select'  >Upload</label>
+
+      <label class="btn btn-outline-dark">
+      Browse
+      <input id="file-upload" type="file" accept=".ics" name="file" hidden>
+     </label>
+
+    </div>
+      <!--
+      <button class="btn btn-outline-dark" type="button" onclick='addText()' >Upload</button>
+
         <form class="form-inline my-2 my-lg-0" >
-          <button class="btn btn-outline-dark" type="button" onclick='addText()' >test upload</button>
-          File Name: <input class="form-control mr-sm-2" type="text" placeholder="example.ics" aria-label="File Name">
+          <input type="file" id="myFile" class="btn btn-outline-dark" onchange="openFileDialog()">
+
+
         </form>
-    </div>
+        /-->
+
   </div>
 
     <div ref = 'Calendar View Panel' id = 'cPan'>
@@ -109,48 +111,37 @@
       <div class ="dropdown">
       <button class="btn btn-outline-dark dropdown-toggle" type="button" data-toggle="dropdown">Dropdown Example<span class="caret"></span></button>
         <ul class="dropdown-menu" id = 'ddFiles'>
-          //files on server loaded here
+
         </ul>
       </div>
       <div class = "Calendar-group"
         style="height:120px;border:4px solid #ccc;font:16px/26px Georgia, Garamond, Serif;padding: 5px;overflow-x:scroll;overflow-y:scroll;">
-            <table id ="calTable" align ="center" style="width:640px;text-align:center">
-              <tr>
-                <th>File name (click to download)</th>
-                <th>Version</th>
-                <th>Product ID</th>
-                <th>Number of events</th>
-                <th>Number of properties</th>
-              </tr>
-              <tr>
-                <td>test</td>
-                <td>test</td>
-                <td>test</td>
-                <td>test</td>
-                <td>test</td>
-              </tr>
+            <table id ="calTable" class = "table table-hover" align ="center" style="width:640px;text-align:center">
+                <th>Event No</th>
+                <th>Start Date</th>
+                <th>Start Time</th>
+                <th>Summary</th>
+                <th>Props</th>
+                <th>Alarms</th>
+
 
           </table>
       </div>
     </div>
 
-
-    <div style="height:20px">
-
+    <div ref = "spacer "style="height:20px">
     </div>
 
     <div ref = 'additonalFunc', id = 'addFunctions'>
       <h3 style="text-align:center">
-          <button class="btn btn-outline-dark" type="button" onclick='addText()' >test Create Cal</button>
+          <button class="btn btn-outline-dark" type="button" onclick='addText()' >Create Calendar</button>
 
       <h3 style="text-align:center">
-         <button class="btn btn-outline-dark" type="button" onclick='addText()' >test Create Event</button>
+         <button class="btn btn-outline-dark" type="button" onclick='addText()' >Create Event</button>
          </h3>
     </div>
     <!-- Leave me at the bottom of body -->
     <script src="/index.js">
-
     }</script>
-
 </body>
 </html>

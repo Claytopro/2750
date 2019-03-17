@@ -19,16 +19,16 @@ function addToFileTable() {
 
 function addText(){
   let div = document.getElementById('statusDiv');
-
-  div.innerHTML += 'Extra stuff ';
-
-  return false;
+  let val = $('#file-upload')[0].value;
+  console.log(val);
+  div.innerHTML += val.toString() + '<br />';
 }
+
 
 function clearText(divID){
   let div = document.getElementById(divID);
 
-  div.innerHTML = 'clear';
+  div.innerHTML = '';
 
   return false;
 }
@@ -42,20 +42,29 @@ $(document).ready(function() {
         type: 'get',            //Request type
         url: '/uploads/',   //The server endpoint we are connecting to
         success: function (data) {
+          console.log('data:' + data);
           let html ='';
+          let name = '';
           let table = document.getElementById("fileTable");
           let dropdown = document.getElementById("ddFiles");
+          if(data.length == 0){
+            document.getElementById('fileForm').innerHTML = 'No files';
+          }else{
+            document.getElementById("fileTable").style.visibility = "visible";
+          }
+
           $.each(data, function(){
-            let row = table.insertRow(-1);
-            let cellName = row.insertCell(0);
-            cellName.innerHTML = '<a href="/uploads/testCalSimpleUTC.ics">'+this+'</a>';
-
-          });
-
-          $.each(data, function() {
+            name = this.toString();
+            if(name.match('.ics')){
+              let row = table.insertRow(-1);
+              let cellName = row.insertCell(0);
+              cellName.innerHTML = '<a href="/uploads/'+ this + '">'+this+'</a>';
               $(dropdown).append( '<li><a class="dropdown-item" href="#">' + this + '</a></li>' );
+            }
 
           });
+
+
 
         },
         fail: function(error) {
@@ -63,16 +72,31 @@ $(document).ready(function() {
             console.log(error);
         }
     });
-    //
-    //
-    //
-    //
-    // // Event listener form replacement example, building a Single-Page-App, no redirects if possible
-    // $('#someform').submit(function(e){
-    //     $('#blah').html("Callback from the form");
-    //     e.preventDefault();
-    //     //Pass data to the Ajax call, so it gets passed to the
-    //     $.ajax({});
-    // });
+
+
+
+    //$('#file-upload')[0].value
+    // Event listener form replacement example, building a Single-Page-App, no redirects if possible
+    $('#upload-select').click(function(){
+        let val = document.querySelector('#file-upload').files[0];
+        console.log(val);
+        //Pass data to the Ajax call, so it gets passed to the
+        //
+        ajax({
+          type: 'post',
+          data: 'hello',
+          url:'/upload',
+          dataType: 'calendar',
+          success: function (data) {
+            console.log('ok');
+          },
+          fail: function(error) {
+              // Non-200 return, do something with error
+              console.log('ERROR:');
+              console.log(error);
+          }
+        });
+
+    });
 
 });

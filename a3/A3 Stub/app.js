@@ -40,6 +40,8 @@ app.get('/index.js',function(req,res){
 
 //Respond to POST requests that upload files to uploads/ directory
 app.post('/upload', function(req, res) {
+  console.log('post request sending');
+
   if(!req.files) {
     return res.status(400).send('No files were uploaded.');
   }
@@ -83,6 +85,8 @@ app.get('/uploads', function(req , res){
 
   res.send(fileNames);
 });
+
+
 
 app.listen(portNum);
 console.log('Running app at localhost: ' + portNum);
