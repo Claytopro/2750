@@ -40,6 +40,8 @@ $(document).ready(function() {
       success:function(data){
         let table = document.getElementById("fileTable");
         let dropdown = document.getElementById("ddFiles");
+        let div = document.getElementById('statusDiv');
+
         calendarObjects = data;
         if(data.length == 0){
           document.getElementById('fileForm').innerHTML = 'NO FILES';
@@ -63,6 +65,9 @@ $(document).ready(function() {
             cellNumEvts.innerHTML  = data[i].numEvents;
             cellNumProps.innerHTML  = data[i].numProps;
             $(dropdown).append( '<li><a class="dropdown-item" href="#" data-value="' + files[i] +'">' + files[i] + '</a></li>' );
+          }else{
+            div.innerHTML += files[i] + ' is invalid and cannot be uploaded <br />';
+
           }
 
         }
@@ -105,7 +110,13 @@ $(document).ready(function() {
 
                     cellNumEvt.innerHTML = i+1;
                     cellstartdt.innerHTML = info[i].startDT.date.slice(0,4) +"/" +info[i].startDT.date.slice(4,6)+"/" +info[i].startDT.date.slice(6,8)  ;
-                    cellstartTime.innerHTML = info[i].startDT.time;
+                    if(info[i].startDT.isUTC == true){
+
+                      cellstartTime.innerHTML = info[i].startDT.time.slice(0,2)+":" +info[i].startDT.time.slice(2,4)+":" +info[i].startDT.time.slice(4,6) + "(UTC)";
+                    }else{
+                        cellstartTime.innerHTML = info[i].startDT.time.slice(0,2)+":" +info[i].startDT.time.slice(2,4)+":" +info[i].startDT.time.slice(4,6);
+                    }
+
                     cellSummary.innerHTML = info[i].summary;
                     cellPros.innerHTML = info[i].numProps;
                     cellAlarms.innerHTML = info[i].numAlarms;
