@@ -42,7 +42,7 @@ $(document).ready(function() {
         type: 'get',            //Request type
         url: '/uploads/',   //The server endpoint we are connecting to
         success: function (data) {
-          console.log('data:' + data);
+
           let html ='';
           let name = '';
           let table = document.getElementById("fileTable");
@@ -82,20 +82,7 @@ $(document).ready(function() {
         console.log(val);
         //Pass data to the Ajax call, so it gets passed to the
         //
-        ajax({
-          type: 'post',
-          data: 'hello',
-          url:'/upload',
-          dataType: 'calendar',
-          success: function (data) {
-            console.log('ok');
-          },
-          fail: function(error) {
-              // Non-200 return, do something with error
-              console.log('ERROR:');
-              console.log(error);
-          }
-        });
+
 
     });
 

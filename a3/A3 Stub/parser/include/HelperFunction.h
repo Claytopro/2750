@@ -33,4 +33,9 @@ void strUpper(char string[]);
 
 ListIterator createConstIterator(const List* list);
 
+Calendar* nodeCreateCal(char* fileName);
+
+void nodeWriteCAl(char* fileName, Calendar* obj);
+
+char* nodeEventListJSON(Calendar* obj);
 #endif

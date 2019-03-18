@@ -1,7 +1,40 @@
+/*
+Clayton Provan
+march 16 2018
+node server utilies
+*/
 'use strict'
 
 // C library API
 const ffi = require('ffi');
+const ref = require("ref");//for the c pointer
+
+var ICALobj = ref.types.void;
+var ICALptr = ref.refType(ICALobj);
+
+let parser = ffi.Library("./parser/bin/libcal.so",{
+  // main writer gedcom
+  "nodeCreateCal": [ICALptr,["string"]],
+  "nodeWriteCAl": ["void", ["string", ICALptr]],
+
+  //JSON Fucntions
+  "calendarToJSON":["string",[ICALptr]],
+  "nodeEventListJSON":["string",[ICALptr]]
+
+});
+
+function tester(){
+  let testFile = "./uploads/test3.ics";
+  console.log('pretest');
+  let calObj = parser.nodeCreateCal(testFile);
+  let str2 = parser.nodeEventListJSON(calObj);
+  let str = parser.calendarToJSON(calObj);
+  console.log('str:' + str);
+  console.log('str2:'+ str2);
+  parser.nodeWriteCAl("nodejsmadethis.ics",calObj);
+}
+
+
 
 // Express App (Routes)
 const express = require("express");
@@ -40,7 +73,6 @@ app.get('/index.js',function(req,res){
 
 //Respond to POST requests that upload files to uploads/ directory
 app.post('/upload', function(req, res) {
-  console.log('post request sending');
 
   if(!req.files) {
     return res.status(400).send('No files were uploaded.');
@@ -77,7 +109,7 @@ app.get('/uploads', function(req , res){
   const fileNames = [];
   const testFolder = './uploads/';
   const fs = require('fs');
-
+  tester();
   fs.readdirSync(testFolder).forEach(file => {
     fileNames.push(file);
 
