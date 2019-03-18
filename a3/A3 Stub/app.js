@@ -109,13 +109,56 @@ app.get('/uploads', function(req , res){
   const fileNames = [];
   const testFolder = './uploads/';
   const fs = require('fs');
-  tester();
+  fs.readdirSync(testFolder).forEach(file => {
+    fileNames.push(file);
+
+  });
+  console.log('sending files');
+  res.send(fileNames);
+});
+
+app.get('/uploadObjs',function(req,res){
+  const fileNames = [];
+  const testFolder = './uploads/';
+  const fs = require('fs');
   fs.readdirSync(testFolder).forEach(file => {
     fileNames.push(file);
 
   });
 
-  res.send(fileNames);
+  var calJSONs = [];
+
+  for(var i=0; i<fileNames.length;i++){
+    var file = "./uploads/" + fileNames[i];
+    console.log("creating for " + file);
+
+    var cal = parser.nodeCreateCal(file);
+    if(cal === null){
+      console.log('cal was null');
+    }
+    var jsonCal = parser.calendarToJSON(cal);
+
+    var calOBJ = [];
+    calOBJ = JSON.parse(jsonCal);
+    console.log(calOBJ);
+
+    calJSONs.push(calOBJ);
+  }
+
+
+  res.send(calJSONs);
+});
+
+app.get('/getEvts', function(req , res){
+    var filename = req.query.fileSelected;
+    var file = "./uploads/" + filename;
+    console.log(" file path = " + file);
+    var cal = parser.nodeCreateCal(file);
+    var jsonString = parser.nodeEventListJSON(cal);
+    console.log("parsed events = " + jsonString.toString());
+
+
+    res.send(jsonString);
 });
 
 

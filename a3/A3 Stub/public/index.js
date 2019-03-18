@@ -1,71 +1,31 @@
 
-function addToFileTable() {
-  let table = document.getElementById("fileTable");
 
-   let row = table.insertRow(-1);
-   let cellName = row.insertCell(0);
-   let cellVer = row.insertCell(1);
-   let cellProdId = row.insertCell(2);
-   let cellNumEvents = row.insertCell(3);
-   let cellNumProps = row.insertCell(4);
-
-   cellName.innerHTML = "NEW CELL1";
-   cellVer.innerHTML = "NEW CELL2";
-   cellProdId.innerHTML = "NEW CELL3";
-   cellNumEvents.innerHTML = "NEW CELL4 \n newCekkt";
-   cellNumProps.innerHTML = "NEW CELL5";
-
-}
 
 function addText(){
   let div = document.getElementById('statusDiv');
-  let val = $('#file-upload')[0].value;
-  console.log(val);
-  div.innerHTML += val.toString() + '<br />';
+
+  div.innerHTML +=  'placeholder <br />';
 }
 
 
 function clearText(divID){
   let div = document.getElementById(divID);
-
   div.innerHTML = '';
-
   return false;
 }
 
 // Put all onload AJAX calls here, and event listeners
 $(document).ready(function() {
     //On page-load AJAX Example
+    let files = [];
+    let calendarObjects = [];
 
-
+    //just gets all the files in uploads
     $.ajax({
         type: 'get',            //Request type
         url: '/uploads/',   //The server endpoint we are connecting to
         success: function (data) {
-
-          let html ='';
-          let name = '';
-          let table = document.getElementById("fileTable");
-          let dropdown = document.getElementById("ddFiles");
-          if(data.length == 0){
-            document.getElementById('fileForm').innerHTML = 'No files';
-          }else{
-            document.getElementById("fileTable").style.visibility = "visible";
-          }
-
-          $.each(data, function(){
-            name = this.toString();
-            if(name.match('.ics')){
-              let row = table.insertRow(-1);
-              let cellName = row.insertCell(0);
-              cellName.innerHTML = '<a href="/uploads/'+ this + '">'+this+'</a>';
-              $(dropdown).append( '<li><a class="dropdown-item" href="#">' + this + '</a></li>' );
-            }
-
-          });
-
-
-
+          files = data;
         },
         fail: function(error) {
             // Non-200 return, do something with error
@@ -73,16 +33,91 @@ $(document).ready(function() {
         }
     });
 
+    $.ajax({
+      type:'get',
+      url:'/uploadObjs',
+      dataType:'json',
+      success:function(data){
+        let table = document.getElementById("fileTable");
+        let dropdown = document.getElementById("ddFiles");
+        calendarObjects = data;
+        if(data.length == 0){
+          document.getElementById('fileForm').innerHTML = 'NO FILES';
+        }else{
+          document.getElementById("fileTable").style.visibility = "visible";
+        }
 
+        for(var i =0;i<data.length;i++){
 
-    //$('#file-upload')[0].value
+          if(data[i].prodID !== undefined){
+            let row = table.insertRow(-1);
+            let cellName = row.insertCell(0);
+            let cellVersion = row.insertCell(1);
+            let cellProdId = row.insertCell(2);
+            let cellNumEvts = row.insertCell(3);
+            let cellNumProps = row.insertCell(4);
+
+            cellName.innerHTML = '<a href="/uploads/'+ files[i] + '">'+files[i]+'</a>';
+            cellVersion.innerHTML = data[i].version;
+            cellProdId.innerHTML  = data[i].prodID;
+            cellNumEvts.innerHTML  = data[i].numEvents;
+            cellNumProps.innerHTML  = data[i].numProps;
+            $(dropdown).append( '<li><a class="dropdown-item" href="#" data-value="' + files[i] +'">' + files[i] + '</a></li>' );
+          }
+
+        }
+      },fail:function(error){
+        // Non-200 return, do something with error
+        console.log(error);
+      }
+
+    });
+
+;
+
     // Event listener form replacement example, building a Single-Page-App, no redirects if possible
-    $('#upload-select').click(function(){
-        let val = document.querySelector('#file-upload').files[0];
-        console.log(val);
-        //Pass data to the Ajax call, so it gets passed to the
-        //
+    $('#ddFiles').on('click','li a' ,function(){
+      $(this).parents(".dropdown").find('.btn').html($(this).text() + ' <span class="caret"></span>');
+      $(this).parents(".dropdown").find('.btn').val($(this).data('value'));
+      var ddFile = $(this).text();
+        console.log('test:' + $(this).text());
+        $('#calTable tbody').empty();
 
+        $.ajax({
+              type: 'get',
+              dataType: 'JSON',
+              url: '/getEvts',
+              data: {fileSelected: ddFile},
+              success: function (data) {
+                  console.log('rtrn:' + JSON.stringify(data));
+                  var info = JSON.parse(JSON.stringify(data));
+
+                  let table = document.getElementById("caltableBody");
+
+                  for(var i=0; i < info.length;i++){
+                    let row = table.insertRow(i);
+                    let cellNumEvt = row.insertCell(0);
+                    let cellstartdt = row.insertCell(1);
+                    let cellstartTime = row.insertCell(2);
+                    let cellSummary = row.insertCell(3);
+                    let cellPros = row.insertCell(4);
+                    let cellAlarms = row.insertCell(5);
+
+                    cellNumEvt.innerHTML = i+1;
+                    cellstartdt.innerHTML = info[i].startDT.date.slice(0,4) +"/" +info[i].startDT.date.slice(4,6)+"/" +info[i].startDT.date.slice(6,8)  ;
+                    cellstartTime.innerHTML = info[i].startDT.time;
+                    cellSummary.innerHTML = info[i].summary;
+                    cellPros.innerHTML = info[i].numProps;
+                    cellAlarms.innerHTML = info[i].numAlarms;
+
+                  }
+
+              },
+              fail: function(error) {
+                  // Non-200 return, do something with error
+                  console.log(error);
+              }
+          });//end ajax
 
     });
 

@@ -122,22 +122,26 @@
     <div ref = 'Calendar View Panel' id = 'cPan'>
       <h2 style="text-align:center"> Calendar View Panel </h2>
       <div class ="dropdown">
-      <button class="btn btn-outline-dark dropdown-toggle" type="button" data-toggle="dropdown">Dropdown Example</button>
+      <button class="btn btn-outline-dark dropdown-toggle" type="button" data-toggle="dropdown">Select File</button>
         <ul class="dropdown-menu" id = 'ddFiles'>
-
         </ul>
       </div>
       <div class = "Calendar-group"
-        style="height:120px;border:4px solid #ccc;font:16px/26px Georgia, Garamond, Serif;padding: 5px;overflow-x:scroll;overflow-y:scroll;">
+        style="height:220px;border:4px solid #ccc;font:16px/26px Georgia, Garamond, Serif;padding: 5px;overflow-x:scroll;overflow-y:scroll;">
             <table id ="calTable" class = "table table-hover" align ="center" style="width:640px;text-align:center">
-                <th>Event No</th>
-                <th>Start Date</th>
-                <th>Start Time</th>
-                <th>Summary</th>
-                <th>Props</th>
-                <th>Alarms</th>
+              <thead>
+                <tr>
+                  <th>Event No</th>
+                  <th>Start Date</th>
+                  <th>Start Time</th>
+                  <th>Summary</th>
+                  <th>Props</th>
+                  <th>Alarms</th>
+            </tr>
+          </thead>
+          <tbody id="caltableBody">
 
-
+          </tbody>
           </table>
       </div>
     </div>

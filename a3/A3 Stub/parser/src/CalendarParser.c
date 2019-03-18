@@ -1812,6 +1812,24 @@ ListIterator createConstIterator(const List* list){
     return iter;
 }
 
+
+char* alarmToJSON(Alarm *prop){
+  char* toRtrn;
+  if(prop == NULL){
+    toRtrn = malloc(sizeof(char)*3);
+    strcpy(toRtrn,"{}");
+    return toRtrn;
+  }
+  toRtrn = malloc(sizeof(char)*256);
+  sprintf(toRtrn,"{\"action\":\"%s\",\"trigger\":\"%s\",\"numProps\":%d}",prop->action,prop->trigger,prop->properties->length+2);
+
+  return toRtrn;
+}
+
+// char* alarmListToJSON()
+
+
+
 /**Node JS Helper Fucntions because idk how you use enums in js**/
 Calendar* nodeCreateCal(char* fileName){
     Calendar *tempCal = NULL;
@@ -1834,13 +1852,11 @@ void nodeWriteCAl(char* fileName, Calendar* obj){
 
 char* nodeEventListJSON(Calendar* obj){
   char *json;
-
- ICalErrorCode error = validateCalendar(obj);
+  ICalErrorCode error = validateCalendar(obj);
   if(error != OK){
      fprintf(stderr, "FAILED eventListToJSON\n");
- }
+   }
   json = eventListToJSON(obj->events);
-  
-  return json;
 
+  return json;
 }

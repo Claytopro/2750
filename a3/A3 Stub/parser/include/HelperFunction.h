@@ -38,4 +38,8 @@ Calendar* nodeCreateCal(char* fileName);
 void nodeWriteCAl(char* fileName, Calendar* obj);
 
 char* nodeEventListJSON(Calendar* obj);
+
+char* alarmToJSON(Alarm *prop);
+
+
 #endif
