@@ -51,7 +51,7 @@ $(document).ready(function() {
           document.getElementById("fileTable").style.visibility = "visible";
         }
 
-        for(var i =0;i<data.length;i++){
+        for(let i =0;i<data.length;i++){
 
           if(data[i].prodID !== undefined){
             let row = table.insertRow(-1);
@@ -86,9 +86,7 @@ $(document).ready(function() {
     $('#ddFiles').on('click','li a' ,function(){
       $(this).parents(".dropdown").find('.btn').html($(this).text() + ' <span class="caret"></span>');
       $(this).parents(".dropdown").find('.btn').val($(this).data('value'));
-      console.log(      $(this).parents(".dropdown").find('.btn').val($(this).data('value')));
-
-      var ddFile = $(this).text();
+      let ddFile = $(this).text();
       console.log('test:' + $(this).text());
       $('#calTable tbody').empty();
 
@@ -99,11 +97,11 @@ $(document).ready(function() {
               data: {fileSelected: ddFile},
               success: function (data) {
                   console.log('rtrn:' + JSON.stringify(data));
-                  var info = JSON.parse(JSON.stringify(data));
+                  let info = JSON.parse(JSON.stringify(data));
 
                   let table = document.getElementById("caltableBody");
 
-                  for(var i=0; i < info.length;i++){
+                  for(let i=0; i < info.length;i++){
                     let row = table.insertRow(i);
                     let cellNumEvt = row.insertCell(0);
                     let cellstartdt = row.insertCell(1);
@@ -140,7 +138,6 @@ $(document).ready(function() {
     $('#ddFilesforEvents').on('click','li a' ,function(){
       $(this).parents(".dropdown").find('.btn').html($(this).text() + ' <span class="caret"></span>');
       $(this).parents(".dropdown").find('.btn').val($(this).data('value'));
-console.log(      $(this).parents(".dropdown").find('.btn').val($(this).data('value')));
       createEventSelect = $(this).text();
       console.log('evnt file selected:' + $(this).text());
 
@@ -153,7 +150,7 @@ console.log(      $(this).parents(".dropdown").find('.btn').val($(this).data('va
       console.log('event clicked');
       //createEventSelect is defined is scope of document rdy
 
-      if(createEventSelect !=undefined){
+      if(createEventSelect != undefined){
         let evtForm = document.getElementById("evtFrm");
         if(evtFrm[0].value){
           console.log("uid:" + evtFrm[0].value);
@@ -161,15 +158,24 @@ console.log(      $(this).parents(".dropdown").find('.btn').val($(this).data('va
             if(evtFrm[2].value){
               let evtJSON = "{\"UID\":\""+ evtFrm[0].value + "\"}";
               console.log(evtJSON);
-              let dStartJSON = "{\"date\":\""+ "TEMP" +"\",\"time\":\""+ "TEMP" +"\",\"isUTC\":false}"
+              let date = evtFrm[1].value.toString().slice(0,4);
+              date += evtFrm[1].value.toString().slice(5,7) + evtFrm[1].value.toString().slice(8,10);
 
-            //gets creation date from current date
-              var today = new Date();
-              var dd = String(today.getDate()).padStart(2, '0');
-              var mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
-              var yyyy = today.getFullYear();
-              var time = today.getHours() + today.getMinutes() + today.getSeconds();
-              let creationDateTime = "{\"date\":\""+ yyyy +mm+dd +"\",\"time\":\""+ time +"\",\"isUTC\":false}"
+              let time = evtFrm[2].value.toString().slice(0,2) +evtFrm[2].value.toString().slice(3,5) + "00" ;
+
+              let dStartJSON = "{\"date\":\""+ date +"\",\"time\":\""+ time +"\",\"isUTC\":false}"
+
+
+              //can now add these to an Event
+
+
+              //gets creation date from current date
+              let today = new Date();
+              let dd = String(today.getDate()).padStart(2, '0');
+              let mm = String(today.getMonth() + 1).padStart(2, '0');
+              let yyyy = today.getFullYear();
+              let creationTime = today.getHours() + today.getMinutes() + today.getSeconds();
+              let creationDateTime = "{\"date\":\""+ yyyy +mm+dd +"\",\"time\":\""+ creationDateTime +"\",\"isUTC\":false}"
               console.log('creation date =' + creationDateTime);
 
             }else{

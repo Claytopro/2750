@@ -131,20 +131,26 @@
     <div ref = "spacer "style="height:20px">
     </div>
 
+    <div ref = "view buttons" >
+      <button class="btn btn-outline-dark" type="button" id = "viewAlarms">View Selected Alarms</button>
+      <button class="btn btn-outline-dark" type="button" id = "viewAlarms">View Selected Properties</button>
+
+
     <div ref = 'additonalFunc', id = 'addFunctions'>
-      <h3 style="text-align:center">
-          <button class="btn btn-outline-dark" type="button" onclick='addText()' >Create Calendar</button>
+
+      <button class="btn btn-outline-dark" type="button" onclick='addText()' >Create Calendar</button>
 
     <div ref = "createEvtDiv", id = 'crtEvtDiv'>
-      <div ref = "buttons"  style="width: 100%">
-      <div style="text-align:center; width:100%">
+
+      <div style=" width:100%">
         <button class="btn btn-outline-dark" type="button" id = "crtEvent">Create Event</button>
+
       </div>
-         <div class ="dropdown" >
+
+       <div class ="dropdown" >
          <button class="btn btn-outline-dark dropdown-toggle" type="button" data-toggle="dropdown">Select File</button>
            <ul class="dropdown-menu" id = 'ddFilesforEvents'>
            </ul>
-         </div>
      </div>
 
       <div style="height:120px;">
