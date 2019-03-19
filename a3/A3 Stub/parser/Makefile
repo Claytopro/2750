@@ -5,7 +5,8 @@ BIN = ./bin/
 SRC = ./src/
 INC = ./include/
 
-all: parser 
+all: parser
+	@mv $(BIN)libcal.so ..
 
 parser: CalendarParser.o LinkedListAPI.o
 	$(CC) -shared -o $(BIN)libcal.so $(BIN)CalendarParser.o $(BIN)LinkedListAPI.o

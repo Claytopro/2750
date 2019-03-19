@@ -98,24 +98,6 @@
      </form>
     </div>
 
-      <!--
-      <label class="btn btn-outline-dark" id='upload-select'  >Upload</label>
-      <input type="submit" class="btn btn-outline-dark" onclick="location.href='#statusPanelID';" ></input>
-
-      <label class="btn btn-outline-dark">
-      Browse<input id="file-upload" type="file" accept=".ics" name="fileUpload" hidden>
-    </label>
-
-
-      <div class="centerContent gedcomButtons setRalewayFont">
-                <form ref='uploadForm' id='uploadForm' action='/upload' method='post' encType="multipart/form-data">
-                    <input type="file" name="uploadFile" id="myFile"></input>
-                    <input type="submit" class="btn btn-default setButtonDarkRed setTimesNewRomanFont" onclick="location.href='#statusPanelID';" ></input>
-                    <a class="btn btn-default setButtonDarkRed setTimesNewRomanFont" href="#createGedcomID">Create GEDCOM</a>
-                </form>
-            </div>
-        </form>
-        /-->
 
   </div>
 
@@ -154,23 +136,30 @@
           <button class="btn btn-outline-dark" type="button" onclick='addText()' >Create Calendar</button>
 
     <div ref = "createEvtDiv", id = 'crtEvtDiv'>
-      <h3 style="text-align:center">
-        <button class="btn btn-outline-dark" type="button" onclick='addText()' id = "crtEvent">Create Event</button
-        </h3>
-         <div class ="dropdown">
+      <div ref = "buttons"  style="width: 100%">
+      <div style="text-align:center; width:100%">
+        <button class="btn btn-outline-dark" type="button" id = "crtEvent">Create Event</button>
+      </div>
+         <div class ="dropdown" >
          <button class="btn btn-outline-dark dropdown-toggle" type="button" data-toggle="dropdown">Select File</button>
            <ul class="dropdown-menu" id = 'ddFilesforEvents'>
            </ul>
-         </div >
+         </div>
+     </div>
+
       <div style="height:120px;">
-        <form class="form-inline my-2 my-lg-0">
-          <input class="form-control mr-sm-2" type="text" placeholder="UID" aria-label="Search">
-          <input class="form-control mr-sm-2" type="text" placeholder="Start Date" aria-label="Search">
-          <input class="form-control mr-sm-2" type="text" placeholder="Start Time" aria-label="Search">
+        <form id = "evtFrm"  display= "inline-block"; >
+          Input UID:<input  class="form-control mr-sm-2" type="text" placeholder="UID"  maxlength="999" aria-label="Search">
+          Select Start Date:<input  class="form-control mr-sm-2" type="date" placeholder="Start Date" aria-label="Search">
+          Select Start Time:<input  class="form-control mr-sm-2" type="time" placeholder="Start Time" aria-label="Search">
+          Input Summary:<input  class="form-control mr-sm-2" type="text" placeholder="In a Galaxy far far away" aria-label="Search">
         </form>
       </div>
 
     </div>
+    </div>
+
+    <div ref = "spacer "style="height:40px">
     </div>
     <!-- Leave me at the bottom of body -->
     <script src="/index.js">

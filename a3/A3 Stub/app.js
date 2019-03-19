@@ -12,7 +12,7 @@ const ref = require("ref");//for the c pointer
 var ICALobj = ref.types.void;
 var ICALptr = ref.refType(ICALobj);
 
-let parser = ffi.Library("./parser/bin/libcal.so",{
+let parser = ffi.Library("./libcal.so",{
   // main writer gedcom
   "nodeCreateCal": [ICALptr,["string"]],
   "nodeWriteCAl": ["void", ["string", ICALptr]],
@@ -123,7 +123,6 @@ app.get('/uploadObjs',function(req,res){
   const fs = require('fs');
   fs.readdirSync(testFolder).forEach(file => {
     fileNames.push(file);
-
   });
 
   var calJSONs = [];
@@ -133,9 +132,6 @@ app.get('/uploadObjs',function(req,res){
     console.log("creating for " + file);
 
     var cal = parser.nodeCreateCal(file);
-    if(cal === null){
-      console.log('cal was null');
-    }
     var jsonCal = parser.calendarToJSON(cal);
 
     var calOBJ = [];

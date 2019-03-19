@@ -19,6 +19,7 @@ $(document).ready(function() {
     //On page-load AJAX Example
     let files = [];
     let calendarObjects = [];
+    let createEventSelect;
 
     //just gets all the files in uploads
     $.ajax({
@@ -69,7 +70,6 @@ $(document).ready(function() {
             $(eventCreationdropdown).append( '<li><a class="dropdown-item" href="#" data-value="' + files[i] +'">' + files[i] + '</a></li>' );
           }else{
             div.innerHTML += files[i] + ' is invalid and cannot be uploaded <br />';
-
           }
 
         }
@@ -86,9 +86,11 @@ $(document).ready(function() {
     $('#ddFiles').on('click','li a' ,function(){
       $(this).parents(".dropdown").find('.btn').html($(this).text() + ' <span class="caret"></span>');
       $(this).parents(".dropdown").find('.btn').val($(this).data('value'));
+      console.log(      $(this).parents(".dropdown").find('.btn').val($(this).data('value')));
+
       var ddFile = $(this).text();
-        console.log('test:' + $(this).text());
-        $('#calTable tbody').empty();
+      console.log('test:' + $(this).text());
+      $('#calTable tbody').empty();
 
         $.ajax({
               type: 'get',
@@ -138,17 +140,51 @@ $(document).ready(function() {
     $('#ddFilesforEvents').on('click','li a' ,function(){
       $(this).parents(".dropdown").find('.btn').html($(this).text() + ' <span class="caret"></span>');
       $(this).parents(".dropdown").find('.btn').val($(this).data('value'));
-      var ddFile = $(this).text();
-      console.log('test:' + $(this).text());
+console.log(      $(this).parents(".dropdown").find('.btn').val($(this).data('value')));
+      createEventSelect = $(this).text();
+      console.log('evnt file selected:' + $(this).text());
 
     });
+
 
     $('#crtEvent').click(function(){
-      console.log('event clicked');
-      let ddSelect = $(ddFilesforEvents).text()
-      console.log('seslct:' + ddSelect);
-    });
+      let div = document.getElementById('statusDiv');
 
+      console.log('event clicked');
+      //createEventSelect is defined is scope of document rdy
+
+      if(createEventSelect !=undefined){
+        let evtForm = document.getElementById("evtFrm");
+        if(evtFrm[0].value){
+          console.log("uid:" + evtFrm[0].value);
+          if(evtFrm[1].value){
+            if(evtFrm[2].value){
+              let evtJSON = "{\"UID\":\""+ evtFrm[0].value + "\"}";
+              console.log(evtJSON);
+              let dStartJSON = "{\"date\":\""+ "TEMP" +"\",\"time\":\""+ "TEMP" +"\",\"isUTC\":false}"
+
+            //gets creation date from current date
+              var today = new Date();
+              var dd = String(today.getDate()).padStart(2, '0');
+              var mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
+              var yyyy = today.getFullYear();
+              var time = today.getHours() + today.getMinutes() + today.getSeconds();
+              let creationDateTime = "{\"date\":\""+ yyyy +mm+dd +"\",\"time\":\""+ time +"\",\"isUTC\":false}"
+              console.log('creation date =' + creationDateTime);
+
+            }else{
+              div.innerHTML += 'No Time Selected, Cannot Create Event <br />';
+            }
+          }else{
+            div.innerHTML += 'No Date Selected, Cannot Create Event <br />';
+          }
+        }else{
+          div.innerHTML += 'No UID input, Cannot Create Event <br />';
+        }
+      }else{
+        div.innerHTML += 'No File Selected, Cannot Create Event <br />';
+      }
+    });
 
 
 });

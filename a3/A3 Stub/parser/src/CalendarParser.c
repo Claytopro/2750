@@ -1835,6 +1835,9 @@ char* alarmToJSON(Alarm *prop){
 Calendar* nodeCreateCal(char* fileName){
     Calendar *tempCal = NULL;
     ICalErrorCode error = createCalendar(fileName,&tempCal);
+    if(tempCal != NULL){
+       error = validateCalendar(tempCal);
+    }
     char *temp = printError(error);
     if(error != OK){
         fprintf(stderr, "FAILED: %s\n",temp);
