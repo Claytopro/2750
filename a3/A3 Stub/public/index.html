@@ -153,9 +153,24 @@
       <h3 style="text-align:center">
           <button class="btn btn-outline-dark" type="button" onclick='addText()' >Create Calendar</button>
 
+    <div ref = "createEvtDiv", id = 'crtEvtDiv'>
       <h3 style="text-align:center">
-         <button class="btn btn-outline-dark" type="button" onclick='addText()' >Create Event</button>
-         </h3>
+        <button class="btn btn-outline-dark" type="button" onclick='addText()' id = "crtEvent">Create Event</button
+        </h3>
+         <div class ="dropdown">
+         <button class="btn btn-outline-dark dropdown-toggle" type="button" data-toggle="dropdown">Select File</button>
+           <ul class="dropdown-menu" id = 'ddFilesforEvents'>
+           </ul>
+         </div >
+      <div style="height:120px;">
+        <form class="form-inline my-2 my-lg-0">
+          <input class="form-control mr-sm-2" type="text" placeholder="UID" aria-label="Search">
+          <input class="form-control mr-sm-2" type="text" placeholder="Start Date" aria-label="Search">
+          <input class="form-control mr-sm-2" type="text" placeholder="Start Time" aria-label="Search">
+        </form>
+      </div>
+
+    </div>
     </div>
     <!-- Leave me at the bottom of body -->
     <script src="/index.js">

@@ -115,7 +115,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
         deleteAlarm(tempAlarm);
         deleteCalendar(tempCal);
         fclose(fp);
-
+        printf("FAILED EHRERE %s\n",bufferLine );
         return INV_FILE;
       }
       //remove newline, should be fine for new line at beginnign becayse fgets will read until then
@@ -1811,6 +1811,7 @@ ListIterator createConstIterator(const List* list){
 
     return iter;
 }
+
 
 
 char* alarmToJSON(Alarm *prop){

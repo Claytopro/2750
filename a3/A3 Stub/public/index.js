@@ -40,6 +40,7 @@ $(document).ready(function() {
       success:function(data){
         let table = document.getElementById("fileTable");
         let dropdown = document.getElementById("ddFiles");
+        let eventCreationdropdown = document.getElementById("ddFilesforEvents");
         let div = document.getElementById('statusDiv');
 
         calendarObjects = data;
@@ -65,6 +66,7 @@ $(document).ready(function() {
             cellNumEvts.innerHTML  = data[i].numEvents;
             cellNumProps.innerHTML  = data[i].numProps;
             $(dropdown).append( '<li><a class="dropdown-item" href="#" data-value="' + files[i] +'">' + files[i] + '</a></li>' );
+            $(eventCreationdropdown).append( '<li><a class="dropdown-item" href="#" data-value="' + files[i] +'">' + files[i] + '</a></li>' );
           }else{
             div.innerHTML += files[i] + ' is invalid and cannot be uploaded <br />';
 
@@ -131,5 +133,22 @@ $(document).ready(function() {
           });//end ajax
 
     });
+
+
+    $('#ddFilesforEvents').on('click','li a' ,function(){
+      $(this).parents(".dropdown").find('.btn').html($(this).text() + ' <span class="caret"></span>');
+      $(this).parents(".dropdown").find('.btn').val($(this).data('value'));
+      var ddFile = $(this).text();
+      console.log('test:' + $(this).text());
+
+    });
+
+    $('#crtEvent').click(function(){
+      console.log('event clicked');
+      let ddSelect = $(ddFilesforEvents).text()
+      console.log('seslct:' + ddSelect);
+    });
+
+
 
 });
