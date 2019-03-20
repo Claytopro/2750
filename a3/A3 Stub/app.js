@@ -21,7 +21,8 @@ let parser = ffi.Library("./libcal.so",{
   "calendarToJSON":["string",[ICALptr]],
   "nodeEventListJSON":["string",[ICALptr]],
   "nodeAlarmListJSON":["string",["string","int"]],
-  "nodePropertieListJSON":["string",["string","int"]]
+  "nodePropertieListJSON":["string",["string","int"]],
+  "addEventToCalendar":["void",["string","string","string","string","string"]]
 
 });
 
@@ -181,6 +182,20 @@ app.get('/getProperties', function(req , res){
     console.log("parsed propperties = " + jsonString.toString());
 
     res.send(jsonString);
+});
+
+
+app.get('/addEvent', function(req , res){
+    var filename = req.query.fileSelected;
+    var file = "./uploads/" + filename;
+    var evt = req.query.event;
+    var cDate = req.query.creationDate;
+    var sDate = req.query.startDate;
+    var sumProp= req.query.sumProp;
+    parser.addEventToCalendar(file,sDate,cDate,evt,sumProp);
+
+    console.log("running some shit here");
+
 });
 
 

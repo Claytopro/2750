@@ -1448,6 +1448,7 @@ char* printProperty(void* toBePrinted){
   tempProp = (Property*)toBePrinted;
 
   toRtrn = calloc(201+ strlen(tempProp->propDescr),sizeof(char));
+  /*prints attach with a semi colon*/
   if(strcmp(tempProp->propName,"ATTACH")==0){
     sprintf(toRtrn,"%s;%s",tempProp->propName,tempProp->propDescr);
 
@@ -1840,6 +1841,34 @@ char* propertyToJSON(Property *prop){
   return toRtrn;
 }
 
+Property *JSONtoProperty(char* prop){
+  Property *tempProp;
+  char* propDes = malloc(sizeof(char)*1000);
+  char* propName= malloc(sizeof(char)*1000);
+
+  if(prop == NULL) return NULL;
+  if(strcmp(prop,"")==0) return NULL;
+
+  const char *format ="{\"propName\":\"%[^\"]\",\"propDescr\":\"%[\"]\"}";
+
+  if(sscanf(prop,format,propName,propDes) != 2){
+    fprintf(stderr, "Properties is bad, propName: %s ; propdes %s \n",propName,propDes);
+    free(propDes);
+    free(propName);
+
+    return NULL;
+  }
+
+  tempProp = calloc(1,sizeof(Property));
+  strcpy(tempProp->propName,propName);
+  strcpy(tempProp->propDescr,propDes);
+  fprintf(stderr, "Properties is bad, propName: %s ; propdes %s \n",propName,propDes);
+
+  free(propDes);
+  free(propName);
+
+  return tempProp;
+}
 
 
 /** Function to converting an Event list into a JSON string
@@ -1949,6 +1978,91 @@ char* alarmListToJSON(const List* alarmList){
   free(temp2);
   return temp;
 }
+
+DateTime* JSONtoDateTime(char* dt){
+  DateTime* tempDT;
+  char *dateT = malloc(sizeof(char)*1000);
+  char *startT= malloc(sizeof(char)*1000);
+  char *utc   = malloc(sizeof(char)*1000);
+  const char *format ="{\"date\":\"%[^\"]\",\"time\":\"%[^\"]\",\"isUTC\":%[^\"]}";
+
+  if(dt == NULL) return NULL;
+
+  if(strcmp(dt,"")==0) return NULL;
+
+  if(sscanf(dt,format,dateT,startT,utc) != 3){
+    free(dateT);
+    free(startT);
+    free(utc);
+    return NULL;
+  }
+
+  tempDT = calloc(1,sizeof(DateTime));
+  strcpy(tempDT->date,dateT);
+  strcpy(tempDT->time,startT);
+  if(strcmp(utc,"Z")==0){
+    tempDT->UTC = 1;
+  }else{
+    tempDT->UTC = 0;
+  }
+
+  free(dateT);
+  free(startT);
+  free(utc);
+
+  return tempDT;
+}
+
+
+void addEventToCalendar(char* fileName,char* startDtJson,char* creationDtJson,char *UIDjson,char *summary){
+  Calendar *tempCal = NULL;
+  Event *tempEvent = NULL;
+  DateTime *tempStartDT = NULL;
+  DateTime *tempCreationDT = NULL;
+  Property *tempProp = NULL;
+
+  char*temp = NULL;
+  fprintf(stderr, "filename: %s\n",fileName);
+  fprintf(stderr, "startDtJson: %s\n",startDtJson);
+  fprintf(stderr, "creationDtJson: %s\n",creationDtJson);
+  fprintf(stderr, "UIDjson: %s\n",UIDjson);
+  fprintf(stderr, "summary: %s\n",summary);
+
+
+  ICalErrorCode error = createCalendar(fileName,&tempCal);
+  if(error != OK){
+      temp = printError(error);
+      deleteCalendar(tempCal);
+      tempCal = NULL;
+      fprintf(stderr, "FAILED: %s\n",temp);
+      free(temp);
+      return;
+  }else{
+    tempEvent = JSONtoEvent(UIDjson);
+    fprintf(stderr, "temp event test: %s\n",tempEvent->UID);
+
+    tempStartDT = JSONtoDateTime(startDtJson);
+    tempCreationDT = JSONtoDateTime(creationDtJson);
+
+    fprintf(stderr, "dates test: %s\n",tempStartDT->date);
+    fprintf(stderr, "dates test: %s\n",tempCreationDT->date);
+
+
+    tempProp = JSONtoProperty(summary);
+    fprintf(stderr, "Properties is %s \n",tempProp->propName);
+
+
+    tempEvent->startDateTime = *tempStartDT;
+    tempEvent->creationDateTime = *tempCreationDT;
+    insertBack(tempEvent->properties,tempProp);
+    fprintf(stderr, "TEsting here");
+    temp = printEvent(tempEvent);
+    printf("%s\n", temp);
+    addEvent(tempCal,tempEvent);
+//    writeCalendar(fileName,tempCal);
+  }
+}
+
 
 /**Node JS Helper Fucntions because idk how you use enums in js**/
 Calendar* nodeCreateCal(char* fileName){
@@ -2069,5 +2183,4 @@ fprintf(stderr, "event UID %s i=%d\n",tempEvent->UID,i);
   json = alarmListToJSON(tempEvent->alarms);
 
   return json;
-
 }

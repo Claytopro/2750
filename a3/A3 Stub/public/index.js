@@ -157,19 +157,14 @@ $(document).ready(function() {
         if(evtFrm[0].value){
           console.log("uid:" + evtFrm[0].value);
           if(evtFrm[1].value){
+
             if(evtFrm[2].value){
+
               let evtJSON = "{\"UID\":\""+ evtFrm[0].value + "\"}";
-              console.log(evtJSON);
               let date = evtFrm[1].value.toString().slice(0,4);
               date += evtFrm[1].value.toString().slice(5,7) + evtFrm[1].value.toString().slice(8,10);
-
-              let time = evtFrm[2].value.toString().slice(0,2) +evtFrm[2].value.toString().slice(3,5) + "00" ;
-
+              let time = evtFrm[2].value.toString().slice(0,2) +evtFrm[2].value.toString().slice(3,5) + "00";
               let dStartJSON = "{\"date\":\""+ date +"\",\"time\":\""+ time +"\",\"isUTC\":false}"
-
-
-              //can now add these to an Event
-
 
               //gets creation date from current date
               let today = new Date();
@@ -177,8 +172,35 @@ $(document).ready(function() {
               let mm = String(today.getMonth() + 1).padStart(2, '0');
               let yyyy = today.getFullYear();
               let creationTime = today.getHours() + today.getMinutes() + today.getSeconds();
-              let creationDateTime = "{\"date\":\""+ yyyy +mm+dd +"\",\"time\":\""+ creationDateTime +"\",\"isUTC\":false}"
+              
+
+              let creationDateTime = "{\"date\":\""+ yyyy +mm+dd +"\",\"time\":\""+ creationTime +"\",\"isUTC\":false}"
+
+              let summary;
+
+              if(evtFrm[3].value){
+                summary ="{\"propName\":\"Summary\",\"propDescr\":\""+evtFrm[3].value.toString() +"\"}";
+              }else{
+                summary = "";
+              }
+
+              console.log('Event is ' + evtJSON);
               console.log('creation date =' + creationDateTime);
+              console.log('start date = ' + dStartJSON);
+              console.log('Summary = ' + summary);
+              $.ajax({
+              type: 'get',
+              url: '/addEvent',
+              data: {fileSelected: createEventSelect, event:evtJSON, creationDate:creationDateTime, startDate:dStartJSON,sumProp:summary},
+              success: function (data) {
+                console.log('added event to file');
+
+              },
+              fail: function(error) {
+                  // Non-200 return, do something with error
+                  console.log(error);
+              }
+              });//end aja
 
             }else{
               div.innerHTML += 'No Time Selected, Cannot Create Event <br />';

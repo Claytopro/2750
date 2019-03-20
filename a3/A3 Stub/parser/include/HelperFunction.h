@@ -41,5 +41,10 @@ char* nodeEventListJSON(Calendar* obj);
 
 char* alarmToJSON(Alarm *prop);
 
+DateTime* JSONtoDateTime(char* dt);
+
+void addEventToCalendar(char* fileName,char* startDtJson,char* creationDtJson,char *UIDjson,char *summary);
+
+Property *JSONtoProperty(char* prop);
 
 #endif
