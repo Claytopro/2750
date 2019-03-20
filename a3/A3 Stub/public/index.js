@@ -20,6 +20,8 @@ $(document).ready(function() {
     let files = [];
     let calendarObjects = [];
     let createEventSelect;
+    let tableSelect;
+    let ddFile;
 
     //just gets all the files in uploads
     $.ajax({
@@ -86,7 +88,7 @@ $(document).ready(function() {
     $('#ddFiles').on('click','li a' ,function(){
       $(this).parents(".dropdown").find('.btn').html($(this).text() + ' <span class="caret"></span>');
       $(this).parents(".dropdown").find('.btn').val($(this).data('value'));
-      let ddFile = $(this).text();
+      ddFile = $(this).text();
       console.log('test:' + $(this).text());
       $('#calTable tbody').empty();
 
@@ -98,7 +100,7 @@ $(document).ready(function() {
               success: function (data) {
                   console.log('rtrn:' + JSON.stringify(data));
                   let info = JSON.parse(JSON.stringify(data));
-
+                  let numEvts = document.getElementById("numEvents");
                   let table = document.getElementById("caltableBody");
 
                   for(let i=0; i < info.length;i++){
@@ -122,7 +124,7 @@ $(document).ready(function() {
                     cellSummary.innerHTML = info[i].summary;
                     cellPros.innerHTML = info[i].numProps;
                     cellAlarms.innerHTML = info[i].numAlarms;
-
+                    numEvts.max = i+1;
                   }
 
               },
@@ -191,6 +193,111 @@ $(document).ready(function() {
         div.innerHTML += 'No File Selected, Cannot Create Event <br />';
       }
     });
+
+
+
+    $('#viewAlarms').click(function(){
+      let div = document.getElementById('statusDiv');
+      let numEvts = document.getElementById("numEvents").value;
+      console.log(numEvts);
+      console.log( document.getElementById("numEvents").max);
+
+      if(numEvts >document.getElementById("numEvents").max || numEvts <document.getElementById("numEvents").min){
+        div.innerHTML += 'Selected event does not exist <br />';
+      }else{
+        console.log("ddfiles =:"+ ddFile);
+        $('#displayStubbTbody').empty();
+
+        $.ajax({
+              type: 'get',
+              dataType: 'JSON',
+              url: '/getAlarms',
+              data:{fileSelected: ddFile, evtSelected: numEvts},
+              success: function (data) {
+                let info = JSON.parse(JSON.stringify(data));
+                let table = document.getElementById("displayStuffTable");
+                let row = table.insertRow(-1);
+
+
+                let cell = row.insertCell(-1);
+                cell.innerHTML = "<h4>Number of Properties</h4>";
+                cell = row.insertCell(-1);
+                cell.innerHTML = "<h4>Trigger</h4>";
+                cell = row.insertCell(-1);
+                cell.innerHTML = "<h4>Action</h4>";
+
+                for(let i=0; i < info.length;i++){
+                  row = table.insertRow(i+1);
+
+                  cell = row.insertCell(-1);
+                  cell.innerHTML = info[i].numProps;
+                  cell = row.insertCell(-1);
+                  cell.innerHTML = info[i].trigger;
+                  cell = row.insertCell(-1);
+                  cell.innerHTML = info[i].action;
+                }
+
+            //    console.log("alarm stuff + data is " + info[0].trigger);
+
+              },fail: function(error) {
+                  // Non-200 return, do something with error
+                  console.log(error);
+              }
+
+            });
+      }
+
+    });
+
+    $('#viewProps').click(function(){
+      let div = document.getElementById('statusDiv');
+      let numEvts = document.getElementById("numEvents").value;
+      console.log(numEvts);
+      console.log( document.getElementById("numEvents").max);
+
+      if(numEvts >document.getElementById("numEvents").max || numEvts <document.getElementById("numEvents").min){
+        div.innerHTML += 'Selected event does not exist <br />';
+      }else{
+        console.log("ddfiles =:"+ ddFile);
+        $('#displayStubbTbody').empty();
+
+        $.ajax({
+              type: 'get',
+              dataType: 'JSON',
+              url: '/getProperties',
+              data:{fileSelected: ddFile, evtSelected: numEvts},
+              success: function (data) {
+                let info = JSON.parse(JSON.stringify(data));
+                let table = document.getElementById("displayStuffTable");
+                let row = table.insertRow(-1);
+
+
+                let cell = row.insertCell(-1);
+                cell.innerHTML = "<h4> Property Name </h4>";
+                cell = row.insertCell(-1);
+                cell.innerHTML = "<h4> Propert Description </h4>";
+
+
+                for(let i=0; i < info.length;i++){
+                  row = table.insertRow(i+1);
+                  cell = row.insertCell(-1);
+                  cell.innerHTML = info[i].propName;
+                  cell = row.insertCell(-1);
+                  cell.innerHTML = info[i].propDescr;
+                }
+
+            //    console.log("alarm stuff + data is " + info[0].trigger);
+
+              },fail: function(error) {
+                  // Non-200 return, do something with error
+                  console.log(error);
+              }
+
+
+            });
+      }
+    });
+
 
 
 });

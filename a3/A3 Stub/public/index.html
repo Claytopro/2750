@@ -133,8 +133,23 @@
 
     <div ref = "view buttons" >
       <button class="btn btn-outline-dark" type="button" id = "viewAlarms">View Selected Alarms</button>
-      <button class="btn btn-outline-dark" type="button" id = "viewAlarms">View Selected Properties</button>
+      <button class="btn btn-outline-dark" type="button" id = "viewProps">View Selected Properties</button>
+      <form>
+        Select event: <input id = "numEvents" type="number" name="quantity" min="1" max = "0" >
+      </form>
+      <div class = "Calendar-group"
+        style="height:220px;border:4px solid #ccc;font:16px/26px Georgia, Garamond, Serif;padding: 5px;overflow-x:scroll;overflow-y:scroll;">
 
+      <table id ="displayStuffTable" class = "table table-hover" align ="center" style="width:640px;text-align:center">
+        <thead>
+
+        </thead>
+        <tbody id="displayStubbTbody">
+
+        </tbody>
+        </table>
+    </div>
+    </div>
 
     <div ref = 'additonalFunc', id = 'addFunctions'>
 

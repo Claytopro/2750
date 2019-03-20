@@ -19,7 +19,9 @@ let parser = ffi.Library("./libcal.so",{
 
   //JSON Fucntions
   "calendarToJSON":["string",[ICALptr]],
-  "nodeEventListJSON":["string",[ICALptr]]
+  "nodeEventListJSON":["string",[ICALptr]],
+  "nodeAlarmListJSON":["string",["string","int"]],
+  "nodePropertieListJSON":["string",["string","int"]]
 
 });
 
@@ -157,6 +159,29 @@ app.get('/getEvts', function(req , res){
     res.send(jsonString);
 });
 
+app.get('/getAlarms', function(req , res){
+    var filename = req.query.fileSelected;
+    var file = "./uploads/" + filename;
+    var select = parseInt(req.query.evtSelected);
+    console.log("pre json parse: " + file);
+
+    var jsonString = parser.nodeAlarmListJSON(file,select);
+    console.log("parsed alarms = " + jsonString.toString());
+
+    res.send(jsonString);
+});
+
+app.get('/getProperties', function(req , res){
+    var filename = req.query.fileSelected;
+    var file = "./uploads/" + filename;
+    var select = parseInt(req.query.evtSelected);
+    console.log("pre json parse: " + file);
+
+    var jsonString = parser.nodePropertieListJSON(file,select);
+    console.log("parsed propperties = " + jsonString.toString());
+
+    res.send(jsonString);
+});
 
 
 app.listen(portNum);

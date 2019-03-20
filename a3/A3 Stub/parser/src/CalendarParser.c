@@ -1827,9 +1827,128 @@ char* alarmToJSON(Alarm *prop){
   return toRtrn;
 }
 
-// char* alarmListToJSON()
+char* propertyToJSON(Property *prop){
+  char* toRtrn;
+  if(prop == NULL){
+    toRtrn = malloc(sizeof(char)*3);
+    strcpy(toRtrn,"{}");
+    return toRtrn;
+  }
+  toRtrn = malloc(sizeof(char)*256);
+  sprintf(toRtrn,"{\"propName\":\"%s\",\"propDescr\":\"%s\"}",prop->propName,prop->propDescr);
+
+  return toRtrn;
+}
 
 
+
+/** Function to converting an Event list into a JSON string
+ *@pre Property list is not NULL
+ *@post Property list has not been modified in any way
+ *@return A string in JSON format
+ *@param eventList - a pointer to an Event list
+ **/
+char* propertieListToJSON(const List* propertyList){
+  char *toRtrn;
+  char *temp = NULL;
+  char *temp2=NULL;
+
+  ListIterator iter;
+  void* elem;
+
+  if(propertyList == NULL){
+    toRtrn = malloc(sizeof(char)*3);
+    strcpy(toRtrn,"[]");
+    return toRtrn;
+  }
+
+  iter = createConstIterator(propertyList);
+  elem = nextElement(&iter);
+  Property* tempProp = (Property*)elem;
+  if(elem == NULL){
+    toRtrn = malloc(sizeof(char)*3);
+    strcpy(toRtrn,"[]");
+    return toRtrn;
+  }
+
+  toRtrn = propertyToJSON(tempProp);
+  //defiantly could of designed this better but its fine
+  //iterate though events adding a comma to begging of JSON string then
+  //concatonating to end of return string
+  while ((elem = nextElement(&iter)) != NULL){
+    tempProp = (Property*)elem;
+    temp2=malloc(sizeof(char)*3);
+    strcpy(temp2,",");
+    temp = propertyToJSON(tempProp);
+    temp2 = realloc(temp2,sizeof(char)*strlen(temp)+3);
+    strcat(temp2,temp);
+
+    toRtrn = realloc(toRtrn,strlen(toRtrn) + strlen(temp2)+1);
+    strcat(toRtrn,temp2);
+  }
+
+  //toRtrn = realloc(toRtrn,strlen(toRtrn)+4);
+  temp = realloc(temp,sizeof(char)*strlen(toRtrn)+4);
+  sprintf(temp,"[%s]",toRtrn);
+
+  free(toRtrn);
+  free(temp2);
+  return temp;
+}
+
+/** Function to converting an Event list into a JSON string
+ *@pre Event list is not NULL
+ *@post Event list has not been modified in any way
+ *@return A string in JSON format
+ *@param eventList - a pointer to an Event list
+ **/
+char* alarmListToJSON(const List* alarmList){
+  char *toRtrn;
+  char *temp = NULL;
+  char *temp2=NULL;
+
+  ListIterator iter;
+  void* elem;
+
+  if(alarmList == NULL){
+    toRtrn = malloc(sizeof(char)*3);
+    strcpy(toRtrn,"[]");
+    return toRtrn;
+  }
+
+  iter = createConstIterator(alarmList);
+  elem = nextElement(&iter);
+  Alarm* tempAlarm = (Alarm*)elem;
+  if(elem == NULL){
+    toRtrn = malloc(sizeof(char)*3);
+    strcpy(toRtrn,"[]");
+    return toRtrn;
+  }
+
+  toRtrn = alarmToJSON(tempAlarm);
+  //defiantly could of designed this better but its fine
+  //iterate though events adding a comma to begging of JSON string then
+  //concatonating to end of return string
+  while ((elem = nextElement(&iter)) != NULL){
+    tempAlarm = (Alarm*)elem;
+    temp2=malloc(sizeof(char)*3);
+    strcpy(temp2,",");
+    temp = alarmToJSON(tempAlarm);
+    temp2 = realloc(temp2,sizeof(char)*strlen(temp)+3);
+    strcat(temp2,temp);
+
+    toRtrn = realloc(toRtrn,strlen(toRtrn) + strlen(temp2)+1);
+    strcat(toRtrn,temp2);
+  }
+
+  //toRtrn = realloc(toRtrn,strlen(toRtrn)+4);
+  temp = realloc(temp,sizeof(char)*strlen(toRtrn)+4);
+  sprintf(temp,"[%s]",toRtrn);
+
+  free(toRtrn);
+  free(temp2);
+  return temp;
+}
 
 /**Node JS Helper Fucntions because idk how you use enums in js**/
 Calendar* nodeCreateCal(char* fileName){
@@ -1840,6 +1959,8 @@ Calendar* nodeCreateCal(char* fileName){
     }
     char *temp = printError(error);
     if(error != OK){
+        deleteCalendar(tempCal);
+        tempCal = NULL;
         fprintf(stderr, "FAILED: %s\n",temp);
     }
     free(temp);
@@ -1863,4 +1984,90 @@ char* nodeEventListJSON(Calendar* obj){
   json = eventListToJSON(obj->events);
 
   return json;
+}
+
+char* nodePropertieListJSON(char *fileName, int evntNum){
+  char *json;
+  Calendar *tempCal = NULL;
+  Event *tempEvent = NULL;
+  ListIterator iter;
+  void* elem;
+  int i =1;
+
+  fprintf(stderr, "PropertieListJSON file name is %s, evt is %d\n",fileName,evntNum);
+
+  ICalErrorCode error = createCalendar(fileName,&tempCal);
+  if(tempCal != NULL){
+     error = validateCalendar(tempCal);
+  }
+  if(error != OK){
+      fprintf(stderr, "FAILED PropertieListJSON\n");
+      return NULL;
+  }
+
+  iter = createConstIterator(tempCal->events);
+  elem = nextElement(&iter);
+  tempEvent = (Event*)elem;
+  if(elem == NULL){
+    json = malloc(sizeof(char)*3);
+    strcpy(json,"[]");
+    return json;
+  }
+
+  //goes through and finds event
+  while (((elem = nextElement(&iter)) != NULL) && i< evntNum){
+    tempEvent = (Event*)elem;
+    i++;
+  }
+
+  json = propertieListToJSON(tempEvent->properties);
+
+  return json;
+}
+
+/*
+creats a string for all alarms for passed in file and selected event
+*/
+char* nodeAlarmListJSON(char *fileName, int evntNum){
+  char *json;
+  Calendar *tempCal = NULL;
+  Event *tempEvent = NULL;
+  ListIterator iter;
+  void* elem;
+  int i =1;
+
+  fprintf(stderr, "PropertieListJSON file name is %s, evt is %d\n",fileName,evntNum);
+
+  ICalErrorCode error = createCalendar(fileName,&tempCal);
+
+  if(tempCal != NULL){
+     error = validateCalendar(tempCal);
+  }
+  if(error != OK){
+      fprintf(stderr, "FAILED PropertieListJSON\n");
+      return NULL;
+  }
+
+  iter = createConstIterator(tempCal->events);
+  elem = nextElement(&iter);
+  tempEvent = (Event*)elem;
+  if(elem == NULL){
+    json = malloc(sizeof(char)*3);
+    strcpy(json,"[]");
+    return json;
+  }
+
+  fprintf(stderr, "event UID %s i=%d\n",tempEvent->UID,i);
+  //goes through and finds event
+  while (((elem = nextElement(&iter)) != NULL) && i < evntNum){
+    tempEvent = (Event*)elem;
+    fprintf(stderr, "event UID %s i=%d\n",tempEvent->UID,i);
+
+    i++;
+  }
+fprintf(stderr, "event UID %s i=%d\n",tempEvent->UID,i);
+  json = alarmListToJSON(tempEvent->alarms);
+
+  return json;
+
 }
