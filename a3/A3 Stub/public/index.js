@@ -163,6 +163,7 @@ $(document).ready(function() {
               let evtJSON = "{\"UID\":\""+ evtFrm[0].value + "\"}";
               let date = evtFrm[1].value.toString().slice(0,4);
               date += evtFrm[1].value.toString().slice(5,7) + evtFrm[1].value.toString().slice(8,10);
+              date = date.substring(0, 8);
               let time = evtFrm[2].value.toString().slice(0,2) +evtFrm[2].value.toString().slice(3,5) + "00";
               let dStartJSON = "{\"date\":\""+ date +"\",\"time\":\""+ time +"\",\"isUTC\":false}"
 
@@ -197,6 +198,7 @@ $(document).ready(function() {
               data: {fileSelected: createEventSelect, event:evtJSON, creationDate:creationDateTime, startDate:dStartJSON,sumProp:summary},
               success: function (data) {
                 console.log('added event to file');
+                //div.innerHTML += 'Created Event <br />';
 
               },
               fail: function(error) {
@@ -204,6 +206,7 @@ $(document).ready(function() {
                   console.log(error);
               }
               });//end aja
+              div.innerHTML += 'Created Event <br />';
 
             }else{
               div.innerHTML += 'No Time Selected, Cannot Create Event <br />';
@@ -344,6 +347,7 @@ $(document).ready(function() {
               evtJSON = "{\"UID\":\""+ evtFrm[0].value + "\"}";
               let date = evtFrm[1].value.toString().slice(0,4);
               date += evtFrm[1].value.toString().slice(5,7) + evtFrm[1].value.toString().slice(8,10);
+              date = date.substring(0, 8);
               let time = evtFrm[2].value.toString().slice(0,2) +evtFrm[2].value.toString().slice(3,5) + "00";
               dStartJSON = "{\"date\":\""+ date +"\",\"time\":\""+ time +"\",\"isUTC\":false}"
 
@@ -378,16 +382,16 @@ $(document).ready(function() {
                         type: 'get',
                         url: '/createCal',
                         data: {fileSelected: calForm[0].value, event:evtJSON, creationDate:creationDateTime, startDate:dStartJSON,sumProp:summary,calendarInfo:calendarJson},
-                        success: function (data) {
+                        success: function () {
                           console.log('added event to file');
-
                         },
                         fail: function(error) {
                           // Non-200 return, do something with error
                           console.log(error);
                         }
                       });//end aja
-
+                      div.innerHTML += 'Added Calendar to Server<br />';
+                      
 
                     }else{
                       div.innerHTML += 'No Version Input, Cannot Create Calendar <br />';
