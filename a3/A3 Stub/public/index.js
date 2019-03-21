@@ -171,10 +171,13 @@ $(document).ready(function() {
               let dd = String(today.getDate()).padStart(2, '0');
               let mm = String(today.getMonth() + 1).padStart(2, '0');
               let yyyy = today.getFullYear();
-              let creationTime = today.getHours() + today.getMinutes() + today.getSeconds();
-              
+              let creationTime = today.getHours().toString() + today.getMinutes().toString() + today.getSeconds().toString();
 
-              let creationDateTime = "{\"date\":\""+ yyyy +mm+dd +"\",\"time\":\""+ creationTime +"\",\"isUTC\":false}"
+              while(creationTime.length <6){
+                creationTime += "0";
+              }
+
+              let creationDateTime = "{\"date\":\""+ yyyy +mm+dd +"\",\"time\":\""+ creationTime +"\",\"isUTC\":false}";
 
               let summary;
 
@@ -320,6 +323,97 @@ $(document).ready(function() {
       }
     });
 
+    $('#createCal').click(function(){
+      let div = document.getElementById('statusDiv');
 
+      console.log('create cal clicked');
+      //createEventSelect is defined is scope of document rdy
+
+
+        let evtForm = document.getElementById("evtFrm");
+        let calForm = document.getElementById("calForm");
+        let evtJSON;
+        let summary;
+        let creationDateTime;
+        let dStartJSON;
+
+        if(evtFrm[0].value){
+          console.log("uid:" + evtFrm[0].value);
+          if(evtFrm[1].value){
+            if(evtFrm[2].value){
+              evtJSON = "{\"UID\":\""+ evtFrm[0].value + "\"}";
+              let date = evtFrm[1].value.toString().slice(0,4);
+              date += evtFrm[1].value.toString().slice(5,7) + evtFrm[1].value.toString().slice(8,10);
+              let time = evtFrm[2].value.toString().slice(0,2) +evtFrm[2].value.toString().slice(3,5) + "00";
+              dStartJSON = "{\"date\":\""+ date +"\",\"time\":\""+ time +"\",\"isUTC\":false}"
+
+              //gets creation date from current date
+              let today = new Date();
+              let dd = String(today.getDate()).padStart(2, '0');
+              let mm = String(today.getMonth() + 1).padStart(2, '0');
+              let yyyy = today.getFullYear();
+              let creationTime = today.getHours().toString() + today.getMinutes().toString() + today.getSeconds().toString();
+
+              while(creationTime.length <6){
+                creationTime += "0";
+              }
+
+              creationDateTime = "{\"date\":\""+ yyyy +mm+dd +"\",\"time\":\""+ creationTime +"\",\"isUTC\":false}";
+
+
+
+              if(evtFrm[3].value){
+                summary ="{\"propName\":\"Summary\",\"propDescr\":\""+evtFrm[3].value.toString() +"\"}";
+              }else{
+                summary = "";
+              }
+
+              if(calForm[0].value){
+                if(calForm[0].value.match(".ics")){
+                  if(calForm[1].value){
+                    if(calForm[2].value){
+                      let calendarJson = "{\"version\":"+ calForm[2].value +",\"prodID\":\""+calForm[1].value+"\"}";
+
+                      $.ajax({
+                        type: 'get',
+                        url: '/createCal',
+                        data: {fileSelected: calForm[0].value, event:evtJSON, creationDate:creationDateTime, startDate:dStartJSON,sumProp:summary,calendarInfo:calendarJson},
+                        success: function (data) {
+                          console.log('added event to file');
+
+                        },
+                        fail: function(error) {
+                          // Non-200 return, do something with error
+                          console.log(error);
+                        }
+                      });//end aja
+
+
+                    }else{
+                      div.innerHTML += 'No Version Input, Cannot Create Calendar <br />';
+                    }
+                  }else{
+                    div.innerHTML += 'No Product ID Input, Cannot Create Calendar <br />';
+                  }
+
+                }else{
+                  div.innerHTML += 'InCorrect file extension, Cannot Create Calendar <br />';
+
+                }
+              }else{
+                div.innerHTML += 'No FileName Input, Cannot Create Calendar <br />';
+              }
+
+            }else{
+              div.innerHTML += 'No Time Selected, Cannot Create Calendar <br />';
+            }
+          }else{
+            div.innerHTML += 'No Date Selected, Cannot Create Calendar <br />';
+          }
+        }else{
+          div.innerHTML += 'No UID input, Cannot Create Calendar <br />';
+        }//end event creation
+
+    });
 
 });

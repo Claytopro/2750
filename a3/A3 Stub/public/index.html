@@ -150,14 +150,27 @@
         </table>
     </div>
     </div>
-
+    <div ref = "spacer "style="height:20px">
+    </div>
     <div ref = 'additonalFunc', id = 'addFunctions'>
+      <div ref = "calendar creation div">
 
-      <button class="btn btn-outline-dark" type="button" onclick='addText()' >Create Calendar</button>
+      <button class="btn btn-outline-dark" type="button" id= "createCal" >Create Calendar</button> (will contain the event below)
+      <div style="height:180px;">
+        <form id = "calForm"  display= "inline-block"; >
+          File Name:<input  class="form-control mr-sm-2" type="text" placeholder="example.ics"  maxlength="999" aria-label="Search">
+          Product ID:<input  class="form-control mr-sm-2" type="text" placeholder="Product ID"  maxlength="999" aria-label="Search">
+          Select Version:<input  class="form-control mr-sm-2" type="number" placeholder="Version Number" aria-label="Search">
+        </form>
+      </div>
+    </div>
+
+    <div ref = "spacer "style="height:20px">
+    </div>
 
     <div ref = "createEvtDiv", id = 'crtEvtDiv'>
 
-      <div style=" width:100%">
+      <div style=" width:100%; height:40px;">
         <button class="btn btn-outline-dark" type="button" id = "crtEvent">Create Event</button>
 
       </div>
@@ -168,7 +181,7 @@
            </ul>
      </div>
 
-      <div style="height:120px;">
+      <div style="height:220px;">
         <form id = "evtFrm"  display= "inline-block"; >
           Input UID:<input  class="form-control mr-sm-2" type="text" placeholder="UID"  maxlength="999" aria-label="Search">
           Select Start Date:<input  class="form-control mr-sm-2" type="date" placeholder="Start Date" aria-label="Search">
@@ -176,11 +189,11 @@
           Input Summary:<input  class="form-control mr-sm-2" type="text" placeholder="In a Galaxy far far away" aria-label="Search">
         </form>
       </div>
-
     </div>
     </div>
 
-    <div ref = "spacer "style="height:40px">
+    <div ref = "spacer "style="height:100">
+        <span style="width: 10px"></span>
     </div>
     <!-- Leave me at the bottom of body -->
     <script src="/index.js">

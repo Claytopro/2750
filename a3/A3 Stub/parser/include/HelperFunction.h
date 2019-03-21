@@ -47,4 +47,5 @@ void addEventToCalendar(char* fileName,char* startDtJson,char* creationDtJson,ch
 
 Property *JSONtoProperty(char* prop);
 
+void nodeCreateNewCalendar(char *fileName,char *json,char* startDtJson,char* creationDtJson,char *UIDjson,char *summary);
 #endif

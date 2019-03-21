@@ -22,7 +22,8 @@ let parser = ffi.Library("./libcal.so",{
   "nodeEventListJSON":["string",[ICALptr]],
   "nodeAlarmListJSON":["string",["string","int"]],
   "nodePropertieListJSON":["string",["string","int"]],
-  "addEventToCalendar":["void",["string","string","string","string","string"]]
+  "addEventToCalendar":["void",["string","string","string","string","string"]],
+  "nodeCreateNewCalendar":["void",["string","string","string","string","string","string"]]
 
 });
 
@@ -139,8 +140,6 @@ app.get('/uploadObjs',function(req,res){
 
     var calOBJ = [];
     calOBJ = JSON.parse(jsonCal);
-    console.log(calOBJ);
-
     calJSONs.push(calOBJ);
   }
 
@@ -194,9 +193,29 @@ app.get('/addEvent', function(req , res){
     var sumProp= req.query.sumProp;
     parser.addEventToCalendar(file,sDate,cDate,evt,sumProp);
 
-    console.log("running some shit here");
-
+    console.log("SuccessFully added event");
+    res.send("Upload SuccessFull");
 });
+
+app.get('/createCal', function(req , res){
+    var filename = req.query.fileSelected;
+    var file = "./uploads/" + filename;
+    var calendarJSON = req.query.calendarInfo;
+    console.log("started input file:" + file);
+    console.log("cal: "+ calendarJSON);
+
+
+    var evt = req.query.event;
+    var cDate = req.query.creationDate;
+    var sDate = req.query.startDate;
+    var sumProp= req.query.sumProp;
+
+    parser.nodeCreateNewCalendar(file,calendarJSON,sDate,cDate,evt,sumProp);
+
+    console.log("SuccessFully created Calendar");
+    res.send("Upload SuccessFull");
+});
+
 
 
 app.listen(portNum);

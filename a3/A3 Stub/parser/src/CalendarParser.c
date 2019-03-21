@@ -32,7 +32,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
     //used to hold the line of information
     //holds 75 bytes, 1 null poiner and potentially
     //3 extra bytes to indicate line break"/r/n "
-    char bufferLine[20000];
+    char bufferLine[2020];
     //temp string for processing data
     char *tempStr = NULL;
     char *fileExtension = NULL;
@@ -48,7 +48,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
 
     //OLD:readLine = malloc(sizeof(char)*(80*lineFactor));
     //use calloc to fix valgring conditional jump errors
-    readLine = calloc(20000,sizeof(char));
+    readLine = calloc(2020,sizeof(char));
 
     //readLine = NULL;
   //  bufferLine = malloc(sizeof(char)*(80*lineFactor));
@@ -91,7 +91,9 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
 
 
     /*reads through each character in the file*/
-    while(fgets(bufferLine, 20000,fp)){
+      fprintf(stderr, "1\n");
+    while(fgets(bufferLine, 2020,fp)){
+
       lineLength = strlen(bufferLine);
       //empty line is foudn and that is bad so we return error, INV_CAL
       if(lineLength == 2){
@@ -115,7 +117,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
         deleteAlarm(tempAlarm);
         deleteCalendar(tempCal);
         fclose(fp);
-        printf("FAILED EHRERE %s\n",bufferLine );
+        printf("FAILED because of line endings %s\n",bufferLine );
         return INV_FILE;
       }
       //remove newline, should be fine for new line at beginnign becayse fgets will read until then
@@ -128,7 +130,8 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
 
           lineFactor++;
           //realloc enough memory to concatonate strings together.
-          readLine = realloc(readLine,sizeof(char)*(20000*lineFactor));
+
+          readLine = realloc(readLine,sizeof(char)*(2020*lineFactor));
 
           //gets rid of space or half tab
           memmove(bufferLine, bufferLine+1, strlen(bufferLine));
@@ -582,22 +585,44 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
     so we just check the last line like we do before, this stuff wont matter if
     last line is a commnet.
     */
-    if(readLine[0] != ';'){
-      ////printf("last line is \"%s\"\r\n",readLine);
-      tempStr = strtok(readLine,":;");
-      //check if last line is
-      if(strcmp(tempStr,"END")==0){
-        tempStr = strtok(NULL,"");
+    if(tempCal == NULL){
+      (*obj) = NULL;
+      deleteCalendar(tempCal);
+      deleteEvent(tempEvent);
+      deleteAlarm(tempAlarm);
+      free(readLine);
+      fclose(fp);
+      return INV_CAL;
+    }
 
-        if(tempStr == NULL){
-          //printf("mallformed end\r\n");
-          //set temp to a bad string so it will reach proper error
-          tempStr = "";
-        }
+    //check if tempCalendar is valid
+    if(strcmp(tempCal->prodID,"") == 0 ||
+    tempCal->version == 0.0 || getFromFront(tempCal->events)==NULL ){
+      deleteCalendar(tempCal);
+      (*obj) = NULL;
+      free(readLine);
+      fclose(fp);
+      return INV_CAL;
+    }
 
-        switch (objectLevel) {
-          //calendar object should be ending
-          case 1:
+    if(readLine != NULL){
+
+      if(readLine[0] != ';'){
+        ////printf("last line is \"%s\"\r\n",readLine);
+        tempStr = strtok(readLine,":;");
+        //check if last line is
+        if(strcmp(tempStr,"END")==0){
+          tempStr = strtok(NULL,"");
+
+          if(tempStr == NULL){
+            //printf("mallformed end\r\n");
+            //set temp to a bad string so it will reach proper error
+            tempStr = "";
+          }
+
+          switch (objectLevel) {
+            //calendar object should be ending
+            case 1:
             if(strcmp(tempStr,"VCALENDAR")!=0){
               //printf("1inv cal\r\n");
               (*obj) = NULL;
@@ -614,8 +639,8 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
               fclose(fp);
               return INV_CAL;
             }
-          break;
-          case 2:
+            break;
+            case 2:
 
             if(strcmp(tempStr,"VEVENT")!=0){
               //printf("inv event\r\n" );
@@ -627,7 +652,7 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
               return INV_EVENT;
             }
             if(strcmp(tempEvent->UID,"")==0 || isValidDateTime(tempEvent->creationDateTime) == 1 ||
-          isValidDateTime(tempEvent->startDateTime)== 1){
+            isValidDateTime(tempEvent->startDateTime)== 1){
               //printf("inv event\r\n" );
               (*obj) = NULL;
               deleteCalendar(tempCal);
@@ -636,8 +661,8 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
               fclose(fp);
               return INV_EVENT;
             }
-          break;
-          case 3:
+            break;
+            case 3:
             if((strcmp(tempStr,"VALARM")!=0)){
               //printf("INV ALARM\r\n" );
               (*obj) = NULL;
@@ -658,18 +683,19 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
               fclose(fp);
               return INV_ALARM;
             }
-          break;
-          default:
-          //printf("mallformed end\r\n");
-          deleteCalendar(tempCal);
-          (*obj)=NULL;
-          deleteEvent(tempEvent);
-          deleteAlarm(tempAlarm);
-          free(readLine);
-          fclose(fp);
-          return OTHER_ERROR;
+            break;
+            default:
+            //printf("mallformed end\r\n");
+            deleteCalendar(tempCal);
+            (*obj)=NULL;
+            deleteEvent(tempEvent);
+            deleteAlarm(tempAlarm);
+            free(readLine);
+            fclose(fp);
+            return OTHER_ERROR;
+          }
+          objectLevel--;
         }
-        objectLevel--;
       }
     }
 
@@ -685,15 +711,8 @@ ICalErrorCode createCalendar(char* fileName, Calendar** obj){
       return INV_CAL;
     }
 
-    //check if tempCalendar is valid
-    if(strcmp(tempCal->prodID,"") == 0 ||
-    tempCal->version == 0.0 || getFromFront(tempCal->events)==NULL ){
-      deleteCalendar(tempCal);
-      (*obj) = NULL;
-      free(readLine);
-      fclose(fp);
-      return INV_CAL;
-    }
+
+
 
     *obj = tempCal;
     printf("FILE:%s\n",fileName );
@@ -1845,24 +1864,25 @@ Property *JSONtoProperty(char* prop){
   Property *tempProp;
   char* propDes = malloc(sizeof(char)*1000);
   char* propName= malloc(sizeof(char)*1000);
-
+  int length;
   if(prop == NULL) return NULL;
   if(strcmp(prop,"")==0) return NULL;
 
-  const char *format ="{\"propName\":\"%[^\"]\",\"propDescr\":\"%[\"]\"}";
+  const char *format ="{\"propName\":\"%[^\"]\",\"propDescr\":\"%[^\"]s\"}";
 
   if(sscanf(prop,format,propName,propDes) != 2){
     fprintf(stderr, "Properties is bad, propName: %s ; propdes %s \n",propName,propDes);
     free(propDes);
     free(propName);
-
     return NULL;
   }
+  length = strlen(propDes)+1;
 
-  tempProp = calloc(1,sizeof(Property));
+  tempProp = malloc(sizeof(Property) + (length*(sizeof(char))));
   strcpy(tempProp->propName,propName);
   strcpy(tempProp->propDescr,propDes);
-  fprintf(stderr, "Properties is bad, propName: %s ; propdes %s \n",propName,propDes);
+
+  fprintf(stderr, "Properties is good, propName: %s ; propdes %s \n",propName,propDes);
 
   free(propDes);
   free(propName);
@@ -1981,9 +2001,9 @@ char* alarmListToJSON(const List* alarmList){
 
 DateTime* JSONtoDateTime(char* dt){
   DateTime* tempDT;
-  char *dateT = malloc(sizeof(char)*1000);
-  char *startT= malloc(sizeof(char)*1000);
-  char *utc   = malloc(sizeof(char)*1000);
+  char *dateT = malloc(sizeof(char)*100);
+  char *startT= malloc(sizeof(char)*100);
+  char *utc   = malloc(sizeof(char)*100);
   const char *format ="{\"date\":\"%[^\"]\",\"time\":\"%[^\"]\",\"isUTC\":%[^\"]}";
 
   if(dt == NULL) return NULL;
@@ -1997,7 +2017,7 @@ DateTime* JSONtoDateTime(char* dt){
     return NULL;
   }
 
-  tempDT = calloc(1,sizeof(DateTime));
+  tempDT = malloc(sizeof(DateTime));
   strcpy(tempDT->date,dateT);
   strcpy(tempDT->time,startT);
   if(strcmp(utc,"Z")==0){
@@ -2021,47 +2041,44 @@ void addEventToCalendar(char* fileName,char* startDtJson,char* creationDtJson,ch
   DateTime *tempCreationDT = NULL;
   Property *tempProp = NULL;
 
-  char*temp = NULL;
-  fprintf(stderr, "filename: %s\n",fileName);
-  fprintf(stderr, "startDtJson: %s\n",startDtJson);
-  fprintf(stderr, "creationDtJson: %s\n",creationDtJson);
-  fprintf(stderr, "UIDjson: %s\n",UIDjson);
-  fprintf(stderr, "summary: %s\n",summary);
 
 
-  ICalErrorCode error = createCalendar(fileName,&tempCal);
-  if(error != OK){
-      temp = printError(error);
-      deleteCalendar(tempCal);
-      tempCal = NULL;
-      fprintf(stderr, "FAILED: %s\n",temp);
-      free(temp);
-      return;
-  }else{
-    tempEvent = JSONtoEvent(UIDjson);
-    fprintf(stderr, "temp event test: %s\n",tempEvent->UID);
+  createCalendar(fileName,&tempCal);
 
-    tempStartDT = JSONtoDateTime(startDtJson);
-    tempCreationDT = JSONtoDateTime(creationDtJson);
+  tempEvent = JSONtoEvent(UIDjson);
 
-    fprintf(stderr, "dates test: %s\n",tempStartDT->date);
-    fprintf(stderr, "dates test: %s\n",tempCreationDT->date);
+  tempStartDT = JSONtoDateTime(startDtJson);
+  tempCreationDT = JSONtoDateTime(creationDtJson);
 
+  tempProp = JSONtoProperty(summary);
 
-    tempProp = JSONtoProperty(summary);
-    fprintf(stderr, "Properties is %s \n",tempProp->propName);
+  if(tempStartDT != NULL){
 
-
-    tempEvent->startDateTime = *tempStartDT;
-    tempEvent->creationDateTime = *tempCreationDT;
-    insertBack(tempEvent->properties,tempProp);
-    fprintf(stderr, "TEsting here");
-    temp = printEvent(tempEvent);
-    printf("%s\n", temp);
-    addEvent(tempCal,tempEvent);
-//    writeCalendar(fileName,tempCal);
+    strcpy(tempEvent->startDateTime.date, tempStartDT->date);
+    strcpy(tempEvent->startDateTime.time,tempStartDT->time);
+    tempEvent->startDateTime.UTC = tempStartDT->UTC;
+    deleteDate(tempStartDT);
   }
-}
+  if(tempCreationDT != NULL){
+
+    strcpy(tempEvent->creationDateTime.date, tempCreationDT->date);
+    strcpy(tempEvent->creationDateTime.time,tempCreationDT->time);
+    tempEvent->creationDateTime.UTC = tempCreationDT->UTC;
+    deleteDate(tempCreationDT);
+  }
+
+  if(tempProp != NULL){
+    insertFront(tempEvent->properties,tempProp);
+  }
+  fprintf(stderr, "this 3");
+
+  addEvent(tempCal,tempEvent);
+
+
+  writeCalendar(fileName,tempCal);
+  deleteCalendar(tempCal);
+  }
+
 
 
 /**Node JS Helper Fucntions because idk how you use enums in js**/
@@ -2183,4 +2200,43 @@ fprintf(stderr, "event UID %s i=%d\n",tempEvent->UID,i);
   json = alarmListToJSON(tempEvent->alarms);
 
   return json;
+}
+
+
+void nodeCreateNewCalendar(char *fileName,char *json,char* startDtJson,char* creationDtJson,char *UIDjson,char *summary){
+    Calendar *tempCal = NULL;
+    Event *tempEvent = NULL;
+    DateTime *tempStartDT = NULL;
+    DateTime *tempCreationDT = NULL;
+    Property *tempProp = NULL;
+    tempCal = JSONtoCalendar(json);
+
+    tempEvent = JSONtoEvent(UIDjson);
+
+    tempStartDT = JSONtoDateTime(startDtJson);
+    tempCreationDT = JSONtoDateTime(creationDtJson);
+
+    tempProp = JSONtoProperty(summary);
+
+    if(tempStartDT != NULL){
+
+      strcpy(tempEvent->startDateTime.date, tempStartDT->date);
+      strcpy(tempEvent->startDateTime.time,tempStartDT->time);
+      tempEvent->startDateTime.UTC = tempStartDT->UTC;
+      deleteDate(tempStartDT);
+    }
+    if(tempCreationDT != NULL){
+
+      strcpy(tempEvent->creationDateTime.date, tempCreationDT->date);
+      strcpy(tempEvent->creationDateTime.time,tempCreationDT->time);
+      tempEvent->creationDateTime.UTC = tempCreationDT->UTC;
+      deleteDate(tempCreationDT);
+    }
+
+    if(tempProp != NULL){
+      insertFront(tempEvent->properties,tempProp);
+    }
+
+    addEvent(tempCal,tempEvent);
+    writeCalendar(fileName,tempCal);
 }
