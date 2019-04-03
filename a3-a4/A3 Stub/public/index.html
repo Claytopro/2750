@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Calendar Viewer</title>
+    <style>
+      table, th, td {
+        border: 1px solid black;
+        border-collapse: collapse;
+      }
+    </style>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="CHANGE ME">
+    <meta name="keywords" content="CHANGE ME">
+    <meta name="author" content="CHANGE ME">
+    <!-- Load jquery, bootstrap -->
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" type="text/css" href="/style.css">
+    <!-- Custom CSS End -->
+</head>
+
+<body>
+  <nav class="navbar navbar-expand-lg navbar-light bg-light">
+  <a class="navbar-brand" href="#">Navbar</a>
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+
+  <div class="collapse navbar-collapse" id="navbarSupportedContent">
+    <ul class="navbar-nav mr-auto">
+      <li class="nav-item">
+        <a class="nav-link" href="#">Link</a>
+      </li>
+      <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          Dropdown
+        </a>
+        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+          <a class="dropdown-item" href="#">I</a>
+          <a class="dropdown-item" href="#">JUST LIKE</a>
+          <div class="dropdown-divider"></div>
+          <a class="dropdown-item" href="#">HOW THIS LOOKS</a>
+        </div>
+      </li>
+    </ul>
+    <form class="form-inline my-2 my-lg-0">
+      <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
+      <button class="btn btn-outline-dark" type="button">Search</button>
+    </form>
+  </div>
+</nav>
+
+<div style="height:200px;">
+  <button class="btn btn-outline-dark" type="button" id= "loginBtn"
+  data-toggle="tooltip" data-placement="top" title="skeet skeet">
+    Log in</button>
+
+  <form id = "loginFrm"  display= "inline-block"; >
+    username:<input  class="form-control mr-sm-2" type="text" placeholder="very_cash money"  maxlength="999" aria-label="Search">
+    password:<input  class="form-control mr-sm-2" type="text" placeholder="password" aria-label="Search">
+  </form>
+</div>
+
+  <div ref = 'Status Panel' id = 'sPan'>
+    <h2 style="text-align:center"> Status Panel </h2>
+
+    <div class="statsButtons-div" id ="statBtnDiv" align="center">
+      <button class="btn btn-outline-dark" type="button" onclick='clearText("statusDiv")'
+      data-toggle="tooltip" data-placement="top" title="Clear all data in status panel">
+      Clear Status Panel</button>
+    </div>
+
+    <div class = "status-div" id = "statusDiv"
+      style="height:120px;border:4px solid #ccc;font:16px/26px Georgia, Garamond, Serif;padding: 5px;overflow:auto;">
+    </div>
+  </div>
+
+  <div ref = 'File Log Panel'>
+    <h2 style="text-align:center"> File Log Panel </h2>
+
+    <div class = "form-group" id = "fileForm"
+    style="height:270px;border:4px solid #ccc;font:16px/26px Georgia, Garamond, Serif;padding: 5px;overflow-x:scroll;overflow-y:scroll;">
+
+        <table id ="fileTable" class = "table table-hover" align ="center" style="width:640px;text-align:center;visibility: hidden;" >
+
+              <th>File name (click to download)</th>
+              <th>Version</th>
+              <th>Product ID</th>
+              <th>Number of events</th>
+              <th>Number of properties</th>
+
+        </table>
+    </div>
+
+    <div id = "uploadDiv">
+      <form ref='uploadForm' id='uploadForm' action='/upload' method='post' encType="multipart/form-data">
+        <label class="btn btn-outline-dark">
+        Browse <input type="file" name="uploadFile" accept=".ics" id="myFile" hidden></input>
+        </label>
+          <label class="btn btn-outline-dark">
+            Submit
+         <input type="submit" class="btn btn-outline-dark" hidden></input>
+       </label>
+     </form>
+    </div>
+
+  </div>
+    <div ref = 'Calendar View Panel' id = 'cPan'>
+      <h2 style="text-align:center"> Calendar View Panel </h2>
+      <div class ="dropdown">
+      <button class="btn btn-outline-dark dropdown-toggle" type="button" data-toggle="dropdown">Select File</button>
+        <ul class="dropdown-menu" id = 'ddFiles'>
+        </ul>
+      </div>
+      <div class = "Calendar-group"
+        style="height:220px;border:4px solid #ccc;font:16px/26px Georgia, Garamond, Serif;padding: 5px;overflow-x:scroll;overflow-y:scroll;">
+            <table id ="calTable" class = "table table-hover" align ="center" style="width:640px;text-align:center">
+              <thead>
+                <tr>
+                  <th>Event No</th>
+                  <th>Start Date</th>
+                  <th>Start Time</th>
+                  <th>Summary</th>
+                  <th>Props</th>
+                  <th>Alarms</th>
+            </tr>
+          </thead>
+          <tbody id="caltableBody">
+
+          </tbody>
+          </table>
+      </div>
+    </div>
+
+    <div ref = "spacer "style="height:20px">
+    </div>
+
+    <div ref = "view buttons" >
+      <button class="btn btn-outline-dark" type="button" id = "viewAlarms">View Selected Alarms</button>
+      <button class="btn btn-outline-dark" type="button" id = "viewProps">View Selected Properties</button>
+      <form>
+        Select event: <input id = "numEvents" type="number" name="quantity" min="1" max = "0" >
+      </form>
+      <div class = "Calendar-group"
+        style="height:220px;border:4px solid #ccc;font:16px/26px Georgia, Garamond, Serif;padding: 5px;overflow-x:scroll;overflow-y:scroll;">
+
+      <table id ="displayStuffTable" class = "table table-hover" align ="center" style="width:640px;text-align:center">
+        <thead>
+
+        </thead>
+        <tbody id="displayStubbTbody">
+
+        </tbody>
+        </table>
+    </div>
+    </div>
+    <div ref = "spacer "style="height:20px">
+    </div>
+    <div ref = 'additonalFunc', id = 'addFunctions'>
+      <div ref = "calendar creation div">
+
+      <button class="btn btn-outline-dark" type="button" id= "createCal" >Create Calendar</button> (will contain the event below)
+      <div style="height:180px;">
+        <form id = "calForm"  display= "inline-block"; >
+          File Name:<input  class="form-control mr-sm-2" type="text" placeholder="example.ics"  maxlength="999" aria-label="Search">
+          Product ID:<input  class="form-control mr-sm-2" type="text" placeholder="Product ID"  maxlength="999" aria-label="Search">
+          Select Version:<input  class="form-control mr-sm-2" type="number" placeholder="Version Number" aria-label="Search">
+        </form>
+      </div>
+    </div>
+
+    <div ref = "spacer "style="height:20px">
+    </div>
+
+    <div ref = "createEvtDiv", id = 'crtEvtDiv'>
+
+      <div style=" width:100%; height:40px;">
+        <button class="btn btn-outline-dark" type="button" id = "crtEvent">Create Event</button>
+
+      </div>
+
+       <div class ="dropdown" >
+         <button class="btn btn-outline-dark dropdown-toggle" type="button" data-toggle="dropdown">Select File</button>
+           <ul class="dropdown-menu" id = 'ddFilesforEvents'>
+           </ul>
+     </div>
+
+      <div style="height:220px;">
+        <form id = "evtFrm"  display= "inline-block"; >
+          Input UID:<input  class="form-control mr-sm-2" type="text" placeholder="UID"  maxlength="999" aria-label="Search">
+          Select Start Date:<input  class="form-control mr-sm-2" type="date" placeholder="Start Date" aria-label="Search">
+          Select Start Time:<input  class="form-control mr-sm-2" type="time" placeholder="Start Time" aria-label="Search">
+          Input Summary:<input  class="form-control mr-sm-2" type="text" placeholder="In a Galaxy far far away" aria-label="Search">
+        </form>
+      </div>
+    </div>
+    </div>
+
+    <div ref = "spacer "style="height:100">
+        <span style="width: 10px"></span>
+    </div>
+    <!-- Leave me at the bottom of body -->
+    <script src="/index.js">
+    }</script>
+</body>
+</html>
